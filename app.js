@@ -30,6 +30,7 @@ if (!firebase.apps.length) {
 
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+const database = firebase.database();
 
 function showSection(section) {
   if (section === 'login') {
