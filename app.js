@@ -12,33 +12,22 @@ const resultRoot = document.getElementById('result-root');
 const resultDefinition = document.getElementById('result-definition');
 const resultExample = document.getElementById('result-example');
 
-// // Firebase 初始化樣板，已更新為新專案金鑰
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk",
-  authDomain: "examguardian-72fe2.firebaseapp.com",
-  projectId: "examguardian-72fe2",
-  storageBucket: "examguardian-72fe2.firebasestorage.app",
-  messagingSenderId: "922403120358",
-  appId: "1:922403120358:web:cb85d85f7143357c24c727",
-  measurementId: "G-N4QT4J2MNS"
+// Firebase 初始化配置，已更新為最新金鑰
+const config = {
+    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk",
+    authDomain: "examguardian-72fe2.firebaseapp.com",
+    projectId: "examguardian-72fe2",
+    storageBucket: "examguardian-72fe2.firebasestorage.com",
+    messagingSenderId: "922403120358",
+    appId: "1:922403120358:web:cb85d85f7143357c24c727",
+    measurementId: "G-N4QT4J2MNS"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-// 解決報錯的關鍵：使用相容模式初始化
+// 確保只初始化一次，避免重複初始化報錯
 if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(config);
 }
+
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
