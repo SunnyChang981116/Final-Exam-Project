@@ -12,7 +12,7 @@ const resultRoot = document.getElementById('result-root');
 const resultDefinition = document.getElementById('result-definition');
 const resultExample = document.getElementById('result-example');
 
-// Firebase 初始化樣板，請替換成你自己的設定。
+// // Firebase 初始化樣板，已更新為新專案金鑰
 const firebaseConfig = {
   apiKey: "AIzaSyBbQbjdnJZEhmSzcHSK7XKYLPeYj9jT2qk",
   authDomain: "examguardian-72fe2.firebaseapp.com",
@@ -23,7 +23,10 @@ const firebaseConfig = {
   measurementId: "G-N4QT4J2MNS"
 };
 
-firebase.initializeApp(firebaseConfig);
+// 解決報錯的關鍵：使用相容模式初始化
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
