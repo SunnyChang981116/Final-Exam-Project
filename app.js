@@ -32,7 +32,14 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const database = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
-
+// 🔄 補上這段：自動攔截並處理網頁跳轉登入的憑證結果
+auth.getRedirectResult().then((result) => {
+    if (result.user) {
+        console.log("跳轉登入成功，已取得使用者資訊：", result.user);
+    }
+}).catch((error) => {
+    console.error("跳轉驗證失敗原因：", error);
+});
 function showSection(section) {
   if (section === 'login') {
     loginSection.classList.remove('hidden');
