@@ -30,6 +30,7 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
+const database = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
 const database = firebase.database();
 
