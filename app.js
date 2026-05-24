@@ -13,8 +13,16 @@ const resultDefinition = document.getElementById('result-definition');
 const resultExample = document.getElementById('result-example');
 
 // // Firebase 初始化樣板，已更新為新專案金鑰
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBbQbjdnJZEhmSzcHSK7XKYLPeYj9jT2qk",
+  apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk",
   authDomain: "examguardian-72fe2.firebaseapp.com",
   projectId: "examguardian-72fe2",
   storageBucket: "examguardian-72fe2.firebasestorage.app",
@@ -22,6 +30,10 @@ const firebaseConfig = {
   appId: "1:922403120358:web:cb85d85f7143357c24c727",
   measurementId: "G-N4QT4J2MNS"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // 解決報錯的關鍵：使用相容模式初始化
 if (!firebase.apps.length) {
