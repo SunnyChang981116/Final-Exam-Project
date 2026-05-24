@@ -55,6 +55,54 @@
           </div>
         </section>
       </main>
+      <section id="vocab-section" class="glass-panel" style="padding: 20px; margin-top: 20px; color: white;">
+        <h2>📂 ExamGuardian 多功能自訂單字/片語書架</h2>
+        
+        <div class="create-folder-box" style="margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+            <h3 style="margin-top:0;">🛠️ 建立新資料夾</h3>
+            <input type="text" id="new-folder-input" placeholder="輸入資料夾名稱（如：空中英語）..." style="padding: 10px; border-radius: 8px; border: none; width: 60%; color: #333;">
+            <button id="create-folder-btn" style="padding: 10px 15px; border-radius: 8px; border: none; background: #E040FB; color: white; cursor: pointer; font-weight: bold;">➕ 建立資料夾</button>
+        </div>
+
+        <div id="search-result-container" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: none;">
+            <h3 id="result-word-b" style="margin-top: 0; color: #00E5FF;"></h3>
+            <div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;">
+                <label>📁 儲存至資料夾：</label>
+                <select id="folder-select" style="padding: 5px; border-radius: 5px; color: #333;">
+                    </select>
+                <button id="save-vocab-btn" style="padding: 6px 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; font-weight: bold;">📥 確認儲存</button>
+            </div>
+        </div>
+
+        <h3>📚 我的精裝資料夾書架</h3>
+        <div id="bookshelf" style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+            </div>
+
+        <div id="review-card-container" style="background: rgba(0, 0, 0, 0.4); padding: 20px; border-radius: 12px; display: none;">
+            <h4 id="current-folder-title" style="color: #E040FB; margin-top: 0; text-align: center;"></h4>
+            
+            <div id="vocab-card" style="background: rgba(255,255,255,0.95); color: #333; padding: 25px; border-radius: 10px; max-width: 400px; margin: 0 auto 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; cursor: pointer;">
+                <h2 id="card-word" style="margin: 0; color: #1a237e;">Word</h2>
+                <div id="card-back" style="display: none; margin-top: 15px; text-align: left; border-top: 1px solid #ccc; padding-top: 10px;">
+                    <p><strong>📝 中文翻譯：</strong> <span id="card-translation"></span></p>
+                    <p><strong>💡 用法說明：</strong> <span id="card-usage"></span></p>
+                    <p><strong>📖 實用例句：</strong> <span id="card-example"></span></p>
+                </div>
+                <small style="color: #999; display: block; margin-top: 15px;">💡 點擊字卡可翻面觀看中文、用法與例句</small>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button id="prev-card" style="padding: 8px 15px; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; border-radius: 5px; cursor: pointer; margin-right: 10px;">⬅️ 上一個</button>
+                <button id="next-card" style="padding: 8px 15px; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; border-radius: 5px; cursor: pointer;">下一個 ➡️</button>
+            </div>
+
+            <div id="reclassify-zone" style="text-align: center; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; max-width: 400px; margin: 0 auto;">
+                <label>🔄 將此字重新分類至：</label>
+                <select id="move-folder-select" style="padding: 4px; border-radius: 4px; color: #333;"></select>
+                <button id="move-vocab-btn" style="padding: 4px 10px; background: #00E5FF; color: #111; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px;">搬家</button>
+            </div>
+        </div>
+    </section>
     </section>
   </div>
 
