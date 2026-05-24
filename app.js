@@ -14,8 +14,9 @@ const resultExample = document.getElementById('result-example');
 
 // Firebase 初始化配置，已更新為最新金鑰
 const config = {
-    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk",
+    apiKey: "AIzaSyBbQbjdnJZEhmSzcHSK7XKYlPeYj9jT2qk",
     authDomain: "examguardian-72fe2.firebaseapp.com",
+    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/",
     projectId: "examguardian-72fe2",
     storageBucket: "examguardian-72fe2.firebasestorage.com",
     messagingSenderId: "922403120358",
