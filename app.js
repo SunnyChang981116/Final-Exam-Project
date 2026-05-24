@@ -57,14 +57,20 @@ auth.onAuthStateChanged((user) => {
   }
 });
 
-googleLoginButton.addEventListener('click', async () => {
-  try {
-    await auth.signInWithPopup(provider);
-  } catch (error) {
-    console.error('Google 登入失敗：', error);
-    alert('登入時發生錯誤，請稍後再試。');
-  }
-});
+// ==================== 🔐 改用跳轉（Redirect）登入，防止瀏覽器攔截 ====================
+if (googleLoginButton) {
+    googleLoginButton.addEventListener('click', () => {
+        try {
+            console.log("發動 Google 網頁跳轉登入...");
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // 從 signInWithPopup 改成 signInWithRedirect！
+            auth.signInWithRedirect(provider);
+        } catch (error) {
+            console.error('Google 登入發動失敗：', error);
+            alert('登入功能初始化失敗，請重新整理網頁。');
+        }
+    });
+}
 
 signOutButton.addEventListener('click', async () => {
   try {
