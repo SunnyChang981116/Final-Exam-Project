@@ -14,12 +14,13 @@ const resultExample = document.getElementById('result-example');
 
 // Firebase 初始化樣板，請替換成你自己的設定。
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY_HERE',
-  authDomain: 'YOUR_AUTH_DOMAIN_HERE',
-  projectId: 'YOUR_PROJECT_ID_HERE',
-  storageBucket: 'YOUR_STORAGE_BUCKET_HERE',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID_HERE',
-  appId: 'YOUR_APP_ID_HERE',
+  apiKey: "AIzaSyBbQbjdnJZEhmSzcHSK7XKYLPeYj9jT2qk",
+  authDomain: "examguardian-72fe2.firebaseapp.com",
+  projectId: "examguardian-72fe2",
+  storageBucket: "examguardian-72fe2.firebasestorage.app",
+  messagingSenderId: "922403120358",
+  appId: "1:922403120358:web:cb85d85f7143357c24c727",
+  measurementId: "G-N4QT4J2MNS"
 };
 
 firebase.initializeApp(firebaseConfig);
