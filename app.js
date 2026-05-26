@@ -14,11 +14,11 @@ const resultExample = document.getElementById('result-example');
 
 // Firebase 初始化配置，已更新為最新金鑰
 const config = {
-    apiKey: "AIzaSyBbQbjdnJZEhmSzcHSK7XKYlPeYj9jT2qk",
+    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 👈 換成官方給的絕對正確金鑰！
     authDomain: "examguardian-72fe2.firebaseapp.com",
     databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/",
     projectId: "examguardian-72fe2",
-    storageBucket: "examguardian-72fe2.firebasestorage.com",
+    storageBucket: "examguardian-72fe2.firebasestorage.app", // 👈 這裡同步更新為最新的 .app
     messagingSenderId: "922403120358",
     appId: "1:922403120358:web:cb85d85f7143357c24c727",
     measurementId: "G-N4QT4J2MNS"
