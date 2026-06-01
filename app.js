@@ -30,7 +30,7 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
-const database = firebase.database();
+const database = firebase.app().database("https://examguardian-72fe2-default-rtdb.firebaseio.com/");
 const provider = new firebase.auth.GoogleAuthProvider();
 // 🔄 補上這段：自動攔截並處理網頁跳轉登入的憑證結果
 auth.getRedirectResult().then((result) => {
@@ -204,25 +204,23 @@ function mockRootDecomposition(word) {
 }
 
 function saveToGoogleSheets(word, def, ex) {
-  const scriptUrl = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
-  const payload = {
-    email: auth.currentUser?.email || '',
-    word,
-    definition: def,
-    example: ex,
-    timestamp: new Date().toISOString(),
-  };
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        console.log("未登入，不儲存單字");
+        return; 
+    }
 
-  fetch(scriptUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  }).catch((error) => {
-    console.warn('Google Sheets 同步暫時無法完成：', error);
-  });
+    // ✨ 脫胎換骨！直接把單字存進 Firebase
+    database.ref('users/' + user.uid + '/all_words').push({
+        word: word,
+        definition: def,
+        example: ex,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        console.log("單字已成功同步至 Firebase！");
+    }).catch((error) => {
+        console.error("Firebase 儲存單字失敗：", error);
+    });
 }
 // ==================== 📂 方案 B：自訂資料夾與片語書架全新核心邏輯 ====================
 
