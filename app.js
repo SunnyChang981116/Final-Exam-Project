@@ -21,7 +21,8 @@ const config = {
     storageBucket: "examguardian-72fe2.firebasestorage.app", // 👈 這裡同步更新為最新的 .app
     messagingSenderId: "922403120358",
     appId: "1:922403120358:web:cb85d85f7143357c24c727",
-    measurementId: "G-N4QT4J2MNS"
+    measurementId: "G-N4QT4J2MNS",
+    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/" 
 };
 
 // 確保只初始化一次，避免重複初始化報錯
@@ -30,7 +31,7 @@ if (!firebase.apps.length) {
 }
 
 const auth = firebase.auth();
-const database = firebase.app().database("https://examguardian-72fe2-default-rtdb.firebaseio.com/");
+const database = firebase.database();
 const provider = new firebase.auth.GoogleAuthProvider();
 // 🔄 補上這段：自動攔截並處理網頁跳轉登入的憑證結果
 auth.getRedirectResult().then((result) => {
