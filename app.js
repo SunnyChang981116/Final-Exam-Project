@@ -31,7 +31,7 @@ if (!firebase.apps.length) {
 }
 
 // 綁定資料庫與登入驗證服務
-const database = firebase.database();
+const database = firebase.app().database("https://examguardian-72fe2-default-rtdb.firebaseio.com/");
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 
