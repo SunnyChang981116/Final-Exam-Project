@@ -12,28 +12,34 @@ const resultRoot = document.getElementById('result-root');
 const resultDefinition = document.getElementById('result-definition');
 const resultExample = document.getElementById('result-example');
 
-// Firebase 初始化配置，已更新為最新金鑰
-const config = {
-    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 👈 換成官方給的絕對正確金鑰！
+// ==========================================
+// 1. Firebase 核心初始化設定
+// ==========================================
+const firebaseConfig = {
+    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 這裡會保持妳原本那串正確的 apiKey
     authDomain: "examguardian-72fe2.firebaseapp.com",
-    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/",
     projectId: "examguardian-72fe2",
-    storageBucket: "examguardian-72fe2.firebasestorage.app", // 👈 這裡同步更新為最新的 .app
-    messagingSenderId: "922403120358",
-    appId: "1:922403120358:web:cb85d85f7143357c24c727",
-    measurementId: "G-N4QT4J2MNS",
-    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/" 
+    storageBucket: "examguardian-72fe2.appspot.com",
+    messagingSenderId: "565039014631",
+    appId: "1:565039014631:web:d8dfb3b28b7e283286f903",
+    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/"
 };
 
-// 確保只初始化一次，避免重複初始化報錯
+// 初始化 Firebase
 if (!firebase.apps.length) {
-    firebase.initializeApp(config);
+    firebase.initializeApp(firebaseConfig);
 }
 
-const auth = firebase.auth();
+// 綁定資料庫與登入驗證服務
 const database = firebase.database();
+const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
-// 🔄 補上這段：自動攔截並處理網頁跳轉登入的憑證結果
+
+// ==========================================
+// 頂端設定結束，下方保留妳原本的程式碼
+// ==========================================
+
+
 auth.getRedirectResult().then((result) => {
     if (result.user) {
         console.log("跳轉登入成功，已取得使用者資訊：", result.user);
