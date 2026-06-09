@@ -441,7 +441,9 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         updateUserDisplay(user);
         showSection('app');
-        loadBookshelf(); // 登入成功，載入精裝書架
+    loadBookshelf(); // 登入成功，載入精裝書架
+    // 啟動即時同步資料夾與書架監聽器
+    if (typeof startListeningToFolders === 'function') startListeningToFolders(user);
     } else {
         showSection('login');
         if (typeof clearResult === "function") clearResult();
@@ -496,3 +498,79 @@ if (document.readyState === 'loading') {
 } else {
     setupFolderCreation();
 }
+
+// ==========================================
+// 🔄 全自動即時同步資料夾、選單與書架功能
+// ==========================================
+function startListeningToFolders(user) {
+  if (!user) return;
+
+  const folderSelect = document.getElementById('folder-select');
+  const moveFolderSelect = document.getElementById('move-folder-select');
+  const bookshelf = document.getElementById('bookshelf');
+
+  console.log("📡 開始即時監聽 Firebase 資料夾變動...");
+
+  const refPath = 'users/' + user.uid + '/folders';
+  // 先解除舊的監聽器，避免重複觸發
+  database.ref(refPath).off();
+
+  // 監聽該登入用戶路徑下的 folders 資料變動 (.on 代表即時同步)
+  database.ref(refPath).on('value', (snapshot) => {
+    // 1. 先清空舊的選單與書架內容，避免重複疊加
+    if (folderSelect) folderSelect.innerHTML = '<option value="">-- 請選擇資料夾 --</option>';
+    if (moveFolderSelect) moveFolderSelect.innerHTML = '<option value="">-- 請選擇資料夾 --</option>';
+    if (bookshelf) bookshelf.innerHTML = '';
+
+    const folders = snapshot.val();
+
+    // 如果資料庫是空的、還沒有任何資料夾
+    if (!folders) {
+      if (bookshelf) bookshelf.innerHTML = '<p style="color: #bbb; padding: 10px;">目前書架空空如也，快在上方建立一個吧！</p>';
+      return;
+    }
+
+    // 2. 開始把資料庫裡的資料夾，一個一個畫到網頁上
+    Object.keys(folders).forEach((folderId) => {
+      const folder = folders[folderId];
+
+      // (A) 加進「儲存至資料夾」下拉選單
+      if (folderSelect) {
+        const opt = document.createElement('option');
+        opt.value = folderId;
+        opt.textContent = folder.name;
+        folderSelect.appendChild(opt);
+      }
+
+      // (B) 加進「搬家」下拉選單
+      if (moveFolderSelect) {
+        const opt = document.createElement('option');
+        opt.value = folderId;
+        opt.textContent = folder.name;
+        moveFolderSelect.appendChild(opt);
+      }
+
+      // (C) 漂亮的精裝書架小盒子
+      if (bookshelf) {
+        const folderDiv = document.createElement('div');
+        folderDiv.className = 'folder-book';
+        folderDiv.style.cssText = "background: linear-gradient(135deg, #E040FB, #00E5FF); color: white; padding: 15px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; min-width: 110px; transition: transform 0.2s;";
+        folderDiv.textContent = '📘 ' + folder.name;
+
+        // 點擊書架上的資料夾（未來可以擴充讀取該資料夾單字的功能）
+        folderDiv.onclick = () => {
+          alert("📂 妳點擊了資料夾： " + folder.name);
+        };
+        bookshelf.appendChild(folderDiv);
+      }
+    });
+    console.log("✨ 網頁選單與書架已同步更新完畢！");
+  });
+}
+
+// 登出時解除所有 users 下的監聽，避免殘留
+auth.onAuthStateChanged((u) => {
+  if (!u) {
+    try { database.ref('users').off(); } catch (e) { /* ignore */ }
+  }
+});
