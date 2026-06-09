@@ -453,35 +453,25 @@ auth.onAuthStateChanged((user) => {
 });
 
 // ==========================================
-// 🛠️ 建立資料夾功能（加強防錯與自動診斷版）
+// 🛠️ 建立資料夾功能（終極無懈可擊版 - 解決網頁載入時間差）
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // 💡 強迫等網頁元件全部生出來後，再抓一次按鈕，保證不抓空！
+function setupFolderCreation() {
     const btn = document.getElementById('create-folder-btn');
     const input = document.getElementById('new-folder-input');
     
-    console.log("【診斷】按鈕抓取狀態：", btn);
-    console.log("【診斷】輸入框抓取狀態：", input);
+    console.log("【終極診斷】按鈕元件狀態：", btn);
+    console.log("【終極診斷】輸入框元件狀態：", input);
 
     if (btn && input) {
-        console.log("✅ 電線對接成功！建立資料夾按鈕已就緒。");
-        
-        btn.addEventListener('click', () => {
-            console.log("💥 偵測到按鈕被點擊了！");
+        btn.onclick = function() {
+            console.log("💥 偵測到建立資料夾按鈕被點擊！");
             const folderName = input.value.trim();
             const user = firebase.auth().currentUser;
             
-            console.log("目前登入狀態：", user ? "已登入" : "未登入");
-            console.log("輸入的文字：", folderName);
+            console.log("目前登入的用戶：", user ? user.displayName : "未登入");
 
-            if (!user) {
-                alert("請先登入喔！");
-                return;
-            }
-            if (!folderName) {
-                alert("請輸入資料夾名稱！");
-                return;
-            }
+            if (!user) { alert("請先登入喔！"); return; }
+            if (!folderName) { alert("請輸入資料夾名稱！"); return; }
 
             // 寫入 Firebase 資料庫
             database.ref('users/' + user.uid + '/folders').push({
@@ -494,8 +484,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch((error) => {
                 console.error("❌ Firebase 儲存失敗原因：", error);
             });
-        });
+        };
+        console.log("✅ 建立資料夾按鈕電線對接成功！功能已就緒。");
     } else {
-        console.error("❌ 錯誤：網頁載入完了，但依然找不到按鈕或輸入框的 ID！");
+        console.error("❌ 錯誤：找不到按鈕或輸入框，請確認 HTML 帶有對應的 ID！");
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFolderCreation);
+} else {
+    setupFolderCreation();
+}
