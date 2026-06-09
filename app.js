@@ -13,16 +13,16 @@ const resultDefinition = document.getElementById('result-definition');
 const resultExample = document.getElementById('result-example');
 
 // ==========================================
-// 1. Firebase 核心初始化設定
+// 1. Firebase 核心初始化設定 
 // ==========================================
 const firebaseConfig = {
-    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 這裡會保持妳原本那串正確的 apiKey
+    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 這裡保持妳原本那串正確的金鑰
     authDomain: "examguardian-72fe2.firebaseapp.com",
     projectId: "examguardian-72fe2",
     storageBucket: "examguardian-72fe2.appspot.com",
     messagingSenderId: "565039014631",
     appId: "1:565039014631:web:d8dfb3b28b7e283286f903",
-    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/"
+    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/" // 👈 檢查這行有沒有在引號裡！
 };
 
 // 初始化 Firebase
@@ -30,10 +30,11 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-// 綁定資料庫與登入驗證服務
-const database = firebase.app().database("https://examguardian-72fe2-default-rtdb.firebaseio.com/");
+// 資料庫宣告
+const database = firebase.database();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+
 
 // ==========================================
 // 頂端設定結束，下方保留妳原本的程式碼
