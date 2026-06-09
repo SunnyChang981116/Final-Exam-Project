@@ -34,6 +34,9 @@ if (!firebase.apps.length) {
 const database = firebase.database();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+// ⚡ 這裡就是第一步要補的地方！把資料夾按鈕的電線接上
+const createFolderBtn = document.getElementById('create-folder-btn');
+const folderInput = document.getElementById('new-folder-input');
 
 
 // ==========================================
@@ -448,3 +451,27 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('search-result-container').style.display = 'none';
     }
 });
+// ✨ 讓「建立資料夾」功能全面復活！
+if (createFolderBtn && folderInput) {
+    createFolderBtn.addEventListener('click', () => {
+        const folderName = folderInput.value.trim();
+        const user = firebase.auth().currentUser;
+        
+        if (!user) { alert("請先登入喔！"); return; }
+        if (!folderName) { alert("請輸入資料夾名稱！"); return; }
+
+        // 直接存進 Firebase 資料庫
+        database.ref('users/' + user.uid + '/folders').push({
+            name: folderName,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            alert("🎉 資料夾建立成功！");
+            folderInput.value = ''; // 成功後清空輸入框
+            
+            // 如果妳的程式碼有寫讀取/渲染資料夾的函式，就順便更新畫面
+            if (typeof loadFolders === 'function') loadFolders();
+        }).catch((error) => {
+            console.error("Firebase 儲存失敗原因：", error);
+        });
+    });
+}
