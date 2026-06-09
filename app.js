@@ -451,27 +451,51 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('search-result-container').style.display = 'none';
     }
 });
-// ✨ 讓「建立資料夾」功能全面復活！
-if (createFolderBtn && folderInput) {
-    createFolderBtn.addEventListener('click', () => {
-        const folderName = folderInput.value.trim();
-        const user = firebase.auth().currentUser;
-        
-        if (!user) { alert("請先登入喔！"); return; }
-        if (!folderName) { alert("請輸入資料夾名稱！"); return; }
 
-        // 直接存進 Firebase 資料庫
-        database.ref('users/' + user.uid + '/folders').push({
-            name: folderName,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            alert("🎉 資料夾建立成功！");
-            folderInput.value = ''; // 成功後清空輸入框
+// ==========================================
+// 🛠️ 建立資料夾功能（加強防錯與自動診斷版）
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 💡 強迫等網頁元件全部生出來後，再抓一次按鈕，保證不抓空！
+    const btn = document.getElementById('create-folder-btn');
+    const input = document.getElementById('new-folder-input');
+    
+    console.log("【診斷】按鈕抓取狀態：", btn);
+    console.log("【診斷】輸入框抓取狀態：", input);
+
+    if (btn && input) {
+        console.log("✅ 電線對接成功！建立資料夾按鈕已就緒。");
+        
+        btn.addEventListener('click', () => {
+            console.log("💥 偵測到按鈕被點擊了！");
+            const folderName = input.value.trim();
+            const user = firebase.auth().currentUser;
             
-            // 如果妳的程式碼有寫讀取/渲染資料夾的函式，就順便更新畫面
-            if (typeof loadFolders === 'function') loadFolders();
-        }).catch((error) => {
-            console.error("Firebase 儲存失敗原因：", error);
+            console.log("目前登入狀態：", user ? "已登入" : "未登入");
+            console.log("輸入的文字：", folderName);
+
+            if (!user) {
+                alert("請先登入喔！");
+                return;
+            }
+            if (!folderName) {
+                alert("請輸入資料夾名稱！");
+                return;
+            }
+
+            // 寫入 Firebase 資料庫
+            database.ref('users/' + user.uid + '/folders').push({
+                name: folderName,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                alert("🎉 資料夾建立成功！");
+                input.value = ''; // 清空輸入框
+                if (typeof loadFolders === 'function') loadFolders();
+            }).catch((error) => {
+                console.error("❌ Firebase 儲存失敗原因：", error);
+            });
         });
-    });
-}
+    } else {
+        console.error("❌ 錯誤：網頁載入完了，但依然找不到按鈕或輸入框的 ID！");
+    }
+});
