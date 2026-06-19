@@ -380,46 +380,53 @@ function startReviewSession(folderName, wordsData) {
     renderCard();
 }
 
-// 🔄 重新補上的字卡渲染核心（放在第 384 行安全線正上方）
+// =================================================================
+// 🎯 詠晴專屬專案：字卡渲染、一字多義、IG風格側邊欄與行事曆終極核心
+// (從第 340 行起全面安全對接版，絕不重複宣告、絕不黑屏)
+// =================================================================
+
+// 🔄 1. 字卡渲染核心（完美對接妳的 vocabList 變數）
 function renderCard() {
-    // 防呆：確保 vocabList 存在且有資料，不然不執行
+    // 防呆：確保單字清單存在且有資料
     if (typeof vocabList === 'undefined' || !vocabList || vocabList.length === 0) {
         console.log("💡 目前書架資料夾內尚無單字可供複習。");
         return;
     }
     
-    // 確保 currentCardIndex 存在
+    // 確保索引值安全
     if (typeof currentCardIndex === 'undefined') currentCardIndex = 0;
     
     const currentItem = vocabList[currentCardIndex];
     if (!currentItem) return;
 
-    // 1. 單字主體
+    // A. 呈現單字
     const wordEl = document.getElementById('card-word');
     if (wordEl) wordEl.innerText = currentItem.word || "Unknown";
     
-    // 2. 🧠 一字多義與英文定義塞錯格子的聰明解析
+    // B. 🧠 聰明解析一字多義與英文定義錯置
     const translationEl = document.getElementById('card-translation');
     if (translationEl) {
         const transText = currentItem.translation || "";
+        // 判斷是否被抓成了長串英文定義
         const isEnglishJson = /[a-zA-Z]{5,}/.test(transText) && !/[\u4e00-\u9fa5]/.test(transText);
         
         if (isEnglishJson) {
-            translationEl.innerHTML = `<span style="color: #ff5555;">(資料庫欄位誤植)</span><br><small style="color: #bbb; font-size: 13px;">${transText}</small>`;
+            translationEl.innerHTML = `<span style="color: #ff5555; font-size:14px;">⚠️ 欄位誤植英文定義</span><br><small style="color: #bbb; font-size: 12px; line-height: 1.2;">${transText}</small>`;
         } else if (transText.includes(';') || transText.includes('；')) {
+            // 自動偵測中英文分號，拆開變成漂亮的 1. 2. 3. 清單
             const delimiter = transText.includes(';') ? ';' : '；';
             const meanings = transText.split(delimiter);
-            translationEl.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
+            translationEl.innerHTML = meanings.map((m, idx) => `<div style="margin-top:4px;">${idx + 1}. ${m.trim()}</div>`).join('');
         } else {
             translationEl.innerText = transText || "暫無翻譯";
         }
     }
 
-    // 3. 用法說明
+    // C. 呈現用法說明
     const usageEl = document.getElementById('card-usage');
     if (usageEl) usageEl.innerText = currentItem.usage || "自訂資料夾收藏";
     
-    // 4. 例句防呆與加亮
+    // D. 呈現例句防呆
     const exampleEl = document.getElementById('card-example');
     if (exampleEl) {
         if (currentItem.example && !currentItem.example.includes("目前無可顯示")) {
@@ -429,59 +436,54 @@ function renderCard() {
         }
     }
 
-    // 5. 隱藏背面
+    // E. 預設隱藏卡片背面
     const backEl = document.getElementById('card-back');
     if (backEl) backEl.style.display = 'none';
 }
-// =================================================================
-// 📱 384行開始：IG 風格側邊欄抽屜與行事曆控制核心 (解開外殼、完美不衝突版)
-// =================================================================
 
-// 1. 取得側邊欄與頁籤專屬元件 (使用獨立安全變數，避免 redeclare 衝突)
-const safeSideDrawer = document.getElementById('side-drawer');
-const safeMenuToggleBtn = document.getElementById('menu-toggle-btn');
-const safeCloseDrawerBtn = document.getElementById('close-drawer-btn');
+// 📱 2. 側邊欄控制模組 (使用獨立全域安全命名，不與上方任何變數相撞)
+const globalSideDrawer = document.getElementById('side-drawer');
+const globalMenuToggleBtn = document.getElementById('menu-toggle-btn');
+const globalCloseDrawerBtn = document.getElementById('close-drawer-btn');
 
-const tabVocabBtn = document.getElementById('tab-vocab-btn');
-const tabCalendarBtn = document.getElementById('tab-calendar-btn');
-const drawerVocabContent = document.getElementById('drawer-vocab-content');
-const drawerCalendarContent = document.getElementById('drawer-calendar-content');
+const globalTabVocabBtn = document.getElementById('tab-vocab-btn');
+const globalTabCalendarBtn = document.getElementById('tab-calendar-btn');
+const globalDrawerVocabContent = document.getElementById('drawer-vocab-content');
+const globalDrawerCalendarContent = document.getElementById('drawer-calendar-content');
 
-console.log("🚀 [系統診斷] 側邊欄與行事曆控制模組已成功融入主線！");
+console.log("🚀 [安全診斷] 側邊欄控制核心已成功與主線路對齊！");
 
-// 2. 側邊欄打開與關閉動作監聽 (防呆確保不黑屏)
-if (safeMenuToggleBtn && safeSideDrawer) {
-    safeMenuToggleBtn.onclick = () => { safeSideDrawer.style.left = '0px'; };
+// 側邊欄開啟與關閉
+if (globalMenuToggleBtn && globalSideDrawer) {
+    globalMenuToggleBtn.onclick = () => { globalSideDrawer.style.left = '0px'; };
 }
-if (safeCloseDrawerBtn && safeSideDrawer) {
-    safeCloseDrawerBtn.onclick = () => { safeSideDrawer.style.left = '-450px'; };
+if (globalCloseDrawerBtn && globalSideDrawer) {
+    globalCloseDrawerBtn.onclick = () => { globalSideDrawer.style.left = '-450px'; };
 }
 
-// 3. 頁籤切換 (單字書架儲藏室 vs 複習任務行事曆)
-if (tabVocabBtn && tabCalendarBtn && drawerVocabContent && drawerCalendarContent) {
-    tabVocabBtn.onclick = () => {
-        tabVocabBtn.style.background = '#E040FB';
-        tabVocabBtn.style.color = '#fff';
-        tabCalendarBtn.style.background = 'rgba(255,255,255,0.1)';
-        tabCalendarBtn.style.color = '#fff';
-        drawerVocabContent.style.display = 'block';
-        drawerCalendarContent.style.display = 'none';
+// 側邊欄內部頁籤切換 (單字書架 vs 複習月曆)
+if (globalTabVocabBtn && globalTabCalendarBtn && globalDrawerVocabContent && globalDrawerCalendarContent) {
+    globalTabVocabBtn.onclick = () => {
+        globalTabVocabBtn.style.background = '#E040FB';
+        globalTabVocabBtn.style.color = '#fff';
+        globalTabCalendarBtn.style.background = 'rgba(255,255,255,0.1)';
+        globalTabCalendarBtn.style.color = '#fff';
+        globalDrawerVocabContent.style.display = 'block';
+        globalDrawerCalendarContent.style.display = 'none';
     };
 
-    tabCalendarBtn.onclick = () => {
-        tabCalendarBtn.style.background = '#00E5FF';
-        tabCalendarBtn.style.color = '#111';
-        tabVocabBtn.style.background = 'rgba(255,255,255,0.1)';
-        tabVocabBtn.style.color = '#fff';
-        drawerVocabContent.style.display = 'none';
-        drawerCalendarContent.style.display = 'block';
-        initCalendarModule(); // 初始化月曆繪製
+    globalTabCalendarBtn.onclick = () => {
+        globalTabCalendarBtn.style.background = '#00E5FF';
+        globalTabCalendarBtn.style.color = '#111';
+        globalTabVocabBtn.style.background = 'rgba(255,255,255,0.1)';
+        globalTabVocabBtn.style.color = '#fff';
+        globalDrawerVocabContent.style.display = 'none';
+        globalDrawerCalendarContent.style.display = 'block';
+        initCalendarModule(); // 切換時自動動態繪製月曆
     };
 }
 
-// ==========================================
-// 📅 全自動動態月曆生成邏輯 (獨立全域模組)
-// ==========================================
+// 📅 3. 動態行事曆月曆渲染大腦
 let calCurrentDate = new Date();
 let calSelectedDateStr = "";
 
@@ -499,16 +501,16 @@ function initCalendarModule() {
     const firstDayIndex = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
 
-    // 填入前方的空白格子
+    // 渲染前方的空白格子
     for (let i = 0; i < firstDayIndex; i++) {
         daysGrid.appendChild(document.createElement('div'));
     }
 
-    // 填入日期格子
+    // 渲染日期數字格子
     for (let day = 1; day <= totalDays; day++) {
         const dayCell = document.createElement('div');
         dayCell.textContent = day;
-        dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; transition: all 0.2s; text-align: center;";
+        dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; text-align: center; transition: all 0.2s;";
         
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
@@ -525,15 +527,13 @@ function initCalendarModule() {
     }
 }
 
-// 切換月份按鈕事件綁定
+// 綁定月份切換按鈕
 const btnPrevMonth = document.getElementById('prev-month-btn');
 const btnNextMonth = document.getElementById('next-month-btn');
 if (btnPrevMonth) { btnPrevMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; }
 if (btnNextMonth) { btnNextMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; }
 
-// ==========================================
-// 📡 行事曆 Firebase Realtime Database 讀寫
-// ==========================================
+// 📡 4. 行事曆 Firebase 資料庫連線模組 (自適應資料庫宣告)
 const btnAddEvent = document.getElementById('add-event-btn');
 const inputEvent = document.getElementById('event-input');
 const listEvent = document.getElementById('event-list');
@@ -547,7 +547,7 @@ if (btnAddEvent) {
         if (!text) { alert("請輸入任務內容！"); return; }
 
         const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-        if (!activeDb) { console.error("找不到 Database 實例"); return; }
+        if (!activeDb) { console.error("未偵測到 Firebase Realtime Database 實例"); return; }
 
         activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
             task: text,
@@ -569,37 +569,26 @@ function loadCalendarEventsModule(dateStr) {
         listEvent.innerHTML = '';
         const data = snapshot.val();
         if (!data) {
-            listEvent.innerHTML = '<li style="color:#aaa; list-style:none; font-size:13px; padding-left: 5px;">當天還沒有排入複習任務。</li>';
+            listEvent.innerHTML = '<li style="color:#aaa; list-style:none; font-size:13px; padding: 4px;">當天還沒有排入複習任務。</li>';
             return;
         }
         Object.keys(data).forEach(key => {
             const li = document.createElement('li');
-            li.style.cssText = "margin-bottom: 6px; font-size:13px; list-style: none; padding-left: 5px; color: #fff;";
+            li.style.cssText = "margin-bottom: 6px; font-size:13px; list-style: none; color: #fff; padding-left: 4px;";
             li.textContent = `🔹 ${data[key].task}`;
             listEvent.appendChild(li);
         });
     });
 }
 
-// ==========================================
-// 🚪 登出時自動解綁監聽器 (安全防漏機制)
-// ==========================================
+// 🔐 5. 登入狀態守衛：控制主按鈕顯示
 if (typeof firebase !== 'undefined') {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-            if (safeMenuToggleBtn) safeMenuToggleBtn.style.display = 'block';
+            if (globalMenuToggleBtn) globalMenuToggleBtn.style.display = 'block';
         } else {
-            if (safeMenuToggleBtn) safeMenuToggleBtn.style.display = 'none';
-            if (safeSideDrawer) safeSideDrawer.style.left = '-450px';
+            if (globalMenuToggleBtn) globalMenuToggleBtn.style.display = 'none';
+            if (globalSideDrawer) globalSideDrawer.style.left = '-450px';
         }
     });
 }
-
-firebase.auth().onAuthStateChanged((u) => {
-    if (!u) {
-        try { 
-            const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-            if(activeDb) activeDb.ref('users').off(); 
-        } catch (e) { /* 靜態忽略 */ }
-    }
-});
