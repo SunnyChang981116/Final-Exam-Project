@@ -441,45 +441,37 @@ function renderCard() {
     if (backEl) backEl.style.display = 'none';
 }
 
-// 📱 2. 側邊欄控制模組 (使用獨立全域安全命名，不與上方任何變數相撞)
-const globalSideDrawer = document.getElementById('side-drawer');
-const globalMenuToggleBtn = document.getElementById('menu-toggle-btn');
-const globalCloseDrawerBtn = document.getElementById('close-drawer-btn');
-
-const globalTabVocabBtn = document.getElementById('tab-vocab-btn');
-const globalTabCalendarBtn = document.getElementById('tab-calendar-btn');
-const globalDrawerVocabContent = document.getElementById('drawer-vocab-content');
-const globalDrawerCalendarContent = document.getElementById('drawer-calendar-content');
-
-console.log("🚀 [安全診斷] 側邊欄控制核心已成功與主線路對齊！");
-
-// 側邊欄開啟與關閉
-if (globalMenuToggleBtn && globalSideDrawer) {
-    globalMenuToggleBtn.onclick = () => { globalSideDrawer.style.left = '0px'; };
+// 📱 2. 側邊欄控制（直接綁定，不使用 const 宣告，百分之百避免重複宣告衝突！）
+if (document.getElementById('menu-toggle-btn') && document.getElementById('side-drawer')) {
+    document.getElementById('menu-toggle-btn').onclick = () => { 
+        document.getElementById('side-drawer').style.left = '0px'; 
+    };
 }
-if (globalCloseDrawerBtn && globalSideDrawer) {
-    globalCloseDrawerBtn.onclick = () => { globalSideDrawer.style.left = '-450px'; };
+if (document.getElementById('close-drawer-btn') && document.getElementById('side-drawer')) {
+    document.getElementById('close-drawer-btn').onclick = () => { 
+        document.getElementById('side-drawer').style.left = '-450px'; 
+    };
 }
 
 // 側邊欄內部頁籤切換 (單字書架 vs 複習月曆)
-if (globalTabVocabBtn && globalTabCalendarBtn && globalDrawerVocabContent && globalDrawerCalendarContent) {
-    globalTabVocabBtn.onclick = () => {
-        globalTabVocabBtn.style.background = '#E040FB';
-        globalTabVocabBtn.style.color = '#fff';
-        globalTabCalendarBtn.style.background = 'rgba(255,255,255,0.1)';
-        globalTabCalendarBtn.style.color = '#fff';
-        globalDrawerVocabContent.style.display = 'block';
-        globalDrawerCalendarContent.style.display = 'none';
+if (document.getElementById('tab-vocab-btn') && document.getElementById('tab-calendar-btn')) {
+    document.getElementById('tab-vocab-btn').onclick = () => {
+        document.getElementById('tab-vocab-btn').style.background = '#E040FB';
+        document.getElementById('tab-vocab-btn').style.color = '#fff';
+        document.getElementById('tab-calendar-btn').style.background = 'rgba(255,255,255,0.1)';
+        document.getElementById('tab-calendar-btn').style.color = '#fff';
+        if(document.getElementById('drawer-vocab-content')) document.getElementById('drawer-vocab-content').style.display = 'block';
+        if(document.getElementById('drawer-calendar-content')) document.getElementById('drawer-calendar-content').style.display = 'none';
     };
 
-    globalTabCalendarBtn.onclick = () => {
-        globalTabCalendarBtn.style.background = '#00E5FF';
-        globalTabCalendarBtn.style.color = '#111';
-        globalTabVocabBtn.style.background = 'rgba(255,255,255,0.1)';
-        globalTabVocabBtn.style.color = '#fff';
-        globalDrawerVocabContent.style.display = 'none';
-        globalDrawerCalendarContent.style.display = 'block';
-        initCalendarModule(); // 切換時自動動態繪製月曆
+    document.getElementById('tab-calendar-btn').onclick = () => {
+        document.getElementById('tab-calendar-btn').style.background = '#00E5FF';
+        document.getElementById('tab-calendar-btn').style.color = '#111';
+        document.getElementById('tab-vocab-btn').style.background = 'rgba(255,255,255,0.1)';
+        document.getElementById('tab-vocab-btn').style.color = '#fff';
+        if(document.getElementById('drawer-vocab-content')) document.getElementById('drawer-vocab-content').style.display = 'none';
+        if(document.getElementById('drawer-calendar-content')) document.getElementById('drawer-calendar-content').style.display = 'block';
+        initCalendarModule(); // 動態畫月曆
     };
 }
 
@@ -495,18 +487,15 @@ function initCalendarModule() {
     daysGrid.innerHTML = '';
     const year = calCurrentDate.getFullYear();
     const month = calCurrentDate.getMonth();
-
     monthTitle.textContent = `${year}年 ${month + 1}月`;
 
     const firstDayIndex = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
 
-    // 渲染前方的空白格子
     for (let i = 0; i < firstDayIndex; i++) {
         daysGrid.appendChild(document.createElement('div'));
     }
 
-    // 渲染日期數字格子
     for (let day = 1; day <= totalDays; day++) {
         const dayCell = document.createElement('div');
         dayCell.textContent = day;
@@ -518,42 +507,38 @@ function initCalendarModule() {
             Array.from(daysGrid.children).forEach(c => { if(c.style) c.style.border = "none"; });
             dayCell.style.border = "2px solid #00E5FF";
             calSelectedDateStr = dateStr;
-            const titleNode = document.getElementById('selected-date-title');
-            if (titleNode) titleNode.textContent = `📅 日期：${dateStr}`;
+            if (document.getElementById('selected-date-title')) {
+                document.getElementById('selected-date-title').textContent = `📅 日期：${dateStr}`;
+            }
             loadCalendarEventsModule(dateStr);
         };
-
         daysGrid.appendChild(dayCell);
     }
 }
 
-// 綁定月份切換按鈕
-const btnPrevMonth = document.getElementById('prev-month-btn');
-const btnNextMonth = document.getElementById('next-month-btn');
-if (btnPrevMonth) { btnPrevMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; }
-if (btnNextMonth) { btnNextMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; }
+// 月份切換按鈕
+if (document.getElementById('prev-month-btn')) { 
+    document.getElementById('prev-month-btn').onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; 
+}
+if (document.getElementById('next-month-btn')) { 
+    document.getElementById('next-month-btn').onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; 
+}
 
-// 📡 4. 行事曆 Firebase 資料庫連線模組 (自適應資料庫宣告)
-const btnAddEvent = document.getElementById('add-event-btn');
-const inputEvent = document.getElementById('event-input');
-const listEvent = document.getElementById('event-list');
-
-if (btnAddEvent) {
-    btnAddEvent.onclick = () => {
-        const text = inputEvent ? inputEvent.value.trim() : '';
+// 📡 4. 行事曆 Firebase 資料庫連線模組
+if (document.getElementById('add-event-btn')) {
+    document.getElementById('add-event-btn').onclick = () => {
+        const text = document.getElementById('event-input') ? document.getElementById('event-input').value.trim() : '';
         const user = firebase.auth().currentUser;
-        if (!user) { alert("請先登入！"); return; }
-        if (!calSelectedDateStr) { alert("請先在月曆上選取日期喔！"); return; }
-        if (!text) { alert("請輸入任務內容！"); return; }
+        if (!user || !calSelectedDateStr || !text) return;
 
         const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-        if (!activeDb) { console.error("未偵測到 Firebase Realtime Database 實例"); return; }
+        if (!activeDb) return;
 
         activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
             task: text,
             createdAt: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
-            if (inputEvent) inputEvent.value = '';
+            if (document.getElementById('event-input')) document.getElementById('event-input').value = '';
             loadCalendarEventsModule(calSelectedDateStr);
         });
     };
@@ -561,11 +546,12 @@ if (btnAddEvent) {
 
 function loadCalendarEventsModule(dateStr) {
     const user = firebase.auth().currentUser;
-    if (!user || !listEvent) return;
+    if (!user || !document.getElementById('event-list')) return;
     const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
     if (!activeDb) return;
 
     activeDb.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
+        const listEvent = document.getElementById('event-list');
         listEvent.innerHTML = '';
         const data = snapshot.val();
         if (!data) {
@@ -585,10 +571,10 @@ function loadCalendarEventsModule(dateStr) {
 if (typeof firebase !== 'undefined') {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-            if (globalMenuToggleBtn) globalMenuToggleBtn.style.display = 'block';
+            if (document.getElementById('menu-toggle-btn')) document.getElementById('menu-toggle-btn').style.display = 'block';
         } else {
-            if (globalMenuToggleBtn) globalMenuToggleBtn.style.display = 'none';
-            if (globalSideDrawer) globalSideDrawer.style.left = '-450px';
+            if (document.getElementById('menu-toggle-btn')) document.getElementById('menu-toggle-btn').style.display = 'none';
+            if (document.getElementById('side-drawer')) document.getElementById('side-drawer').style.left = '-450px';
         }
     });
 }
