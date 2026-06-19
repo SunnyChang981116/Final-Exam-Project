@@ -86,7 +86,7 @@ function initCalendar() {
         dayMaxEvents: 5,        // ✅ 最多顯示5個，超過會變成「+更多」
         height: 'auto',         // 自適應高度
         
-        // 抓取 Firebase 資料塞給行事曆
+        // 抓取 Firebase 資料塞給行事曆 (保留妳原本完美的設定)
         events: function(fetchInfo, successCallback, failureCallback) {
             const user = auth.currentUser;
             if (!user) { successCallback([]); return; }
@@ -119,12 +119,55 @@ function initCalendar() {
         // 當使用者「拉長」區塊時，更新結束時間
         eventResize: function(info) {
             updateEventTimeInFirebase(info.event);
+        },
+
+        // 🌟🌟🌟 新加的功能：點擊現有行程，跳出視窗並顯示刪除按鈕 🌟🌟🌟
+        eventClick: function(info) {
+            const eventObj = info.event;
+            
+            // 1. 把行程的原本資料填入 Modal 輸入框中
+            document.getElementById('modal-title').value = eventObj.title;
+            if (eventObj.startStr) {
+                document.getElementById('modal-start').value = eventObj.startStr.slice(0, 16);
+            }
+            if (eventObj.endStr) {
+                document.getElementById('modal-end').value = eventObj.endStr.slice(0, 16);
+            } else {
+                document.getElementById('modal-end').value = '';
+            }
+            document.getElementById('modal-color').value = eventObj.backgroundColor;
+            
+            // 2. 顯示「刪除行程」按鈕！
+            const deleteBtn = document.getElementById('delete-event-btn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'block'; // 讓刪除按鈕現形
+                
+                // 3. 綁定刪除按鈕的點擊動作
+                deleteBtn.onclick = function() {
+                    if (confirm(`確定要刪除行程「${eventObj.title}」嗎？`)) {
+                        const user = auth.currentUser;
+                        if (!user) return;
+                        
+                        // ⚠️ 這裡已經幫妳修正為正確的 professional_calendar 路徑！
+                        database.ref(`users/${user.uid}/professional_calendar/${eventObj.id}`).remove()
+                        .then(() => {
+                            alert("行程已成功刪除！");
+                            eventObj.remove(); // 同步把網頁畫面上的行程消滅
+                            document.getElementById('event-modal-overlay').style.display = 'none'; // 關閉視窗
+                        })
+                        .catch(err => alert("刪除失敗：" + err));
+                    }
+                };
+            }
+            
+            // 4. 打開彈出視窗
+            document.getElementById('event-modal-overlay').style.display = 'flex';
         }
+        // 🌟🌟🌟 新加的功能結束 🌟🌟🌟
     });
     
     calendar.render();
 }
-
 function updateEventTimeInFirebase(eventObj) {
     const user = auth.currentUser;
     if (!user) return;
@@ -152,17 +195,32 @@ const saveBtn = document.getElementById('modal-save-btn');
 // 打開表單
 fabBtn.addEventListener('click', () => {
     document.getElementById('modal-title').value = '';
-    // 預設時間填入現在
+    // 預設時間填入現在 (保留妳原本超棒的設計)
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('modal-start').value = now.toISOString().slice(0,16);
+    document.getElementById('modal-end').value = ''; // 順便確保結束時間是空的
     modalOverlay.style.display = 'flex';
+
+    // 🌟 核心關鍵：這是「新增全新行程」，所以把刪除按鈕藏起來！
+    const deleteBtn = document.getElementById('delete-event-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'none';
+    }
 });
 
 // 關閉表單
-cancelBtn.addEventListener('click', () => modalOverlay.style.display = 'none');
+cancelBtn.addEventListener('click', () => {
+    modalOverlay.style.display = 'none';
+    
+    // 🌟 關閉時也順便把刪除按鈕藏起來
+    const deleteBtn = document.getElementById('delete-event-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'none';
+    }
+});
 
-// 儲存資料到 Firebase
+// 儲存資料到 Firebase (這段完全保留妳原本寫的！)
 saveBtn.addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return alert("請先登入！");
@@ -190,7 +248,6 @@ saveBtn.addEventListener('click', () => {
         calendar.refetchEvents(); // 讓行事曆重新整理抓資料
     }).catch(err => alert("儲存失敗：" + err));
 });
-
 
 // ==========================================
 // 5. 側邊欄抽屜開關控制
