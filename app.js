@@ -381,346 +381,173 @@ function startReviewSession(folderName, wordsData) {
 }
 
 // ==========================================
-// 📱 IG 風格側邊欄抽屜與行事曆控制核心 (精簡防撞安全版)
+// =================================================================
+// 📱 384行開始：IG 風格側邊欄抽屜與行事曆控制核心 (解開外殼、完美不衝突版)
+// =================================================================
+
+// 1. 取得側邊欄與頁籤專屬元件 (使用獨立安全變數，避免 redeclare 衝突)
+const safeSideDrawer = document.getElementById('side-drawer');
+const safeMenuToggleBtn = document.getElementById('menu-toggle-btn');
+const safeCloseDrawerBtn = document.getElementById('close-drawer-btn');
+
+const tabVocabBtn = document.getElementById('tab-vocab-btn');
+const tabCalendarBtn = document.getElementById('tab-calendar-btn');
+const drawerVocabContent = document.getElementById('drawer-vocab-content');
+const drawerCalendarContent = document.getElementById('drawer-calendar-content');
+
+console.log("🚀 [系統診斷] 側邊欄與行事曆控制模組已成功融入主線！");
+
+// 2. 側邊欄打開與關閉動作監聽 (防呆確保不黑屏)
+if (safeMenuToggleBtn && safeSideDrawer) {
+    safeMenuToggleBtn.onclick = () => { safeSideDrawer.style.left = '0px'; };
+}
+if (safeCloseDrawerBtn && safeSideDrawer) {
+    safeCloseDrawerBtn.onclick = () => { safeSideDrawer.style.left = '-450px'; };
+}
+
+// 3. 頁籤切換 (單字書架儲藏室 vs 複習任務行事曆)
+if (tabVocabBtn && tabCalendarBtn && drawerVocabContent && drawerCalendarContent) {
+    tabVocabBtn.onclick = () => {
+        tabVocabBtn.style.background = '#E040FB';
+        tabVocabBtn.style.color = '#fff';
+        tabCalendarBtn.style.background = 'rgba(255,255,255,0.1)';
+        tabCalendarBtn.style.color = '#fff';
+        drawerVocabContent.style.display = 'block';
+        drawerCalendarContent.style.display = 'none';
+    };
+
+    tabCalendarBtn.onclick = () => {
+        tabCalendarBtn.style.background = '#00E5FF';
+        tabCalendarBtn.style.color = '#111';
+        tabVocabBtn.style.background = 'rgba(255,255,255,0.1)';
+        tabVocabBtn.style.color = '#fff';
+        drawerVocabContent.style.display = 'none';
+        drawerCalendarContent.style.display = 'block';
+        initCalendarModule(); // 初始化月曆繪製
+    };
+}
+
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. 取得側邊欄專屬元件 (使用獨立命名，保證不與上方變數相撞)
-    const drawerElement = document.getElementById('side-drawer');
-    const toggleMenuBtn = document.getElementById('menu-toggle-btn');
-    const closeMenuBtn = document.getElementById('close-drawer-btn');
-    
-    const btnTabVocab = document.getElementById('tab-vocab-btn');
-    const btnTabCalendar = document.getElementById('tab-calendar-btn');
-    const contentDrawerVocab = document.getElementById('drawer-vocab-content');
-    const contentDrawerCalendar = document.getElementById('drawer-calendar-content');
+// 📅 全自動動態月曆生成邏輯 (獨立全域模組)
+// ==========================================
+let calCurrentDate = new Date();
+let calSelectedDateStr = "";
 
-    console.log("🚀 [安全診斷] 側邊欄核心模組已成功防撞載入！");
+function initCalendarModule() {
+    const monthTitle = document.getElementById('calendar-month-title');
+    const daysGrid = document.getElementById('calendar-days-grid');
+    if (!daysGrid || !monthTitle) return;
 
-    // 2. 監聽 Firebase 登入狀態以顯示按鈕 (移除重複宣告的 loginSection)
-    if (typeof firebase !== 'undefined') {
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                if (toggleMenuBtn) toggleMenuBtn.style.display = 'block';
-            } else {
-                if (toggleMenuBtn) toggleMenuBtn.style.display = 'none';
-                if (drawerElement) drawerElement.style.left = '-450px'; 
-            }
-        });
+    daysGrid.innerHTML = '';
+    const year = calCurrentDate.getFullYear();
+    const month = calCurrentDate.getMonth();
+
+    monthTitle.textContent = `${year}年 ${month + 1}月`;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    // 填入前方的空白格子
+    for (let i = 0; i < firstDayIndex; i++) {
+        daysGrid.appendChild(document.createElement('div'));
     }
 
-    // 3. 側邊欄開關控制
-    if (toggleMenuBtn && drawerElement) {
-        toggleMenuBtn.addEventListener('click', () => { drawerElement.style.left = '0px'; });
-    }
-    if (closeMenuBtn && drawerElement) {
-        closeMenuBtn.addEventListener('click', () => { drawerElement.style.left = '-450px'; });
-    }
-
-    // 4. 頁籤切換 (單字書架 vs 行事曆)
-    if (btnTabVocab && btnTabCalendar && contentDrawerVocab && contentDrawerCalendar) {
-        btnTabVocab.addEventListener('click', () => {
-            btnTabVocab.style.background = '#E040FB';
-            btnTabVocab.style.color = '#fff';
-            btnTabCalendar.style.background = 'rgba(255,255,255,0.1)';
-            btnTabCalendar.style.color = '#fff';
-            contentDrawerVocab.style.display = 'block';
-            contentDrawerCalendar.style.display = 'none';
-        });
-
-        btnTabCalendar.addEventListener('click', () => {
-            btnTabCalendar.style.background = '#00E5FF';
-            btnTabCalendar.style.color = '#111';
-            btnTabVocab.style.background = 'rgba(255,255,255,0.1)';
-            btnTabVocab.style.color = '#fff';
-            contentDrawerVocab.style.display = 'none';
-            contentDrawerCalendar.style.display = 'block';
-            initCalendarModule(); // 初始化月曆
-        });
-    }
-
-    // ==========================================
-    // 📅 月曆動態生成邏輯 (全面加上安全防護防呆)
-    // ==========================================
-    let calCurrentDate = new Date();
-    let calSelectedDateStr = "";
-
-    function initCalendarModule() {
-        const monthTitle = document.getElementById('calendar-month-title');
-        const daysGrid = document.getElementById('calendar-days-grid');
-        if (!daysGrid || !monthTitle) return;
-
-        daysGrid.innerHTML = '';
-        const year = calCurrentDate.getFullYear();
-        const month = calCurrentDate.getMonth();
-
-        monthTitle.textContent = `${year}年 ${month + 1}月`;
-
-        const firstDayIndex = new Date(year, month, 1).getDay();
-        const totalDays = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            daysGrid.appendChild(document.createElement('div'));
-        }
-
-        for (let day = 1; day <= totalDays; day++) {
-            const dayCell = document.createElement('div');
-            dayCell.textContent = day;
-            dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; transition: all 0.2s;";
-            
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
-            dayCell.addEventListener('click', () => {
-                Array.from(daysGrid.children).forEach(c => c.style.border = "none");
-                dayCell.style.border = "2px solid #00E5FF";
-                calSelectedDateStr = dateStr;
-                const titleNode = document.getElementById('selected-date-title');
-                if (titleNode) titleNode.textContent = `📅 日期：${dateStr}`;
-                loadCalendarEventsModule(dateStr);
-            });
-
-            daysGrid.appendChild(dayCell);
-        }
-    }
-
-    // 為月曆按鈕綁定事件 (加上防呆)
-    const btnPrevMonth = document.getElementById('prev-month-btn');
-    const btnNextMonth = document.getElementById('next-month-btn');
-    if (btnPrevMonth) { btnPrevMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; }
-    if (btnNextMonth) { btnNextMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; }
-
-    // ==========================================
-    // 📡 行事曆 Firebase 資料庫讀寫事件 (加上防呆)
-    // ==========================================
-    const btnAddEvent = document.getElementById('add-event-btn');
-    const inputEvent = document.getElementById('event-input');
-    const listEvent = document.getElementById('event-list');
-
-    if (btnAddEvent) {
-        btnAddEvent.onclick = () => {
-            const text = inputEvent ? inputEvent.value.trim() : '';
-            const user = firebase.auth().currentUser;
-            if (!user) { alert("請先登入！"); return; }
-            if (!calSelectedDateStr) { alert("請先在月曆上選取日期喔！"); return; }
-            if (!text) { alert("請輸入任務內容！"); return; }
-
-            // 自動適應妳原本宣告的資料庫變數名稱 (db 或 database)
-            const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-            if (!activeDb) { console.error("找不到 Firebase Database 實例"); return; }
-
-            activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
-                task: text,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                if (inputEvent) inputEvent.value = '';
-                loadCalendarEventsModule(calSelectedDateStr);
-            });
+    // 填入日期格子
+    for (let day = 1; day <= totalDays; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.textContent = day;
+        dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; transition: all 0.2s; text-align: center;";
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        dayCell.onclick = () => {
+            Array.from(daysGrid.children).forEach(c => { if(c.style) c.style.border = "none"; });
+            dayCell.style.border = "2px solid #00E5FF";
+            calSelectedDateStr = dateStr;
+            const titleNode = document.getElementById('selected-date-title');
+            if (titleNode) titleNode.textContent = `📅 日期：${dateStr}`;
+            loadCalendarEventsModule(dateStr);
         };
-    }
 
-    function loadCalendarEventsModule(dateStr) {
+        daysGrid.appendChild(dayCell);
+    }
+}
+
+// 切換月份按鈕事件綁定
+const btnPrevMonth = document.getElementById('prev-month-btn');
+const btnNextMonth = document.getElementById('next-month-btn');
+if (btnPrevMonth) { btnPrevMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; }
+if (btnNextMonth) { btnNextMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; }
+
+// ==========================================
+// 📡 行事曆 Firebase Realtime Database 讀寫
+// ==========================================
+const btnAddEvent = document.getElementById('add-event-btn');
+const inputEvent = document.getElementById('event-input');
+const listEvent = document.getElementById('event-list');
+
+if (btnAddEvent) {
+    btnAddEvent.onclick = () => {
+        const text = inputEvent ? inputEvent.value.trim() : '';
         const user = firebase.auth().currentUser;
-        if (!user || !listEvent) return;
+        if (!user) { alert("請先登入！"); return; }
+        if (!calSelectedDateStr) { alert("請先在月曆上選取日期喔！"); return; }
+        if (!text) { alert("請輸入任務內容！"); return; }
+
         const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-        if (!activeDb) return;
+        if (!activeDb) { console.error("找不到 Database 實例"); return; }
 
-        activeDb.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
-            listEvent.innerHTML = '';
-            const data = snapshot.val();
-            if (!data) {
-                listEvent.innerHTML = '<li style="color:#aaa; list-style:none;">當天還沒有排入複習任務。</li>';
-                return;
-            }
-            Object.keys(data).forEach(key => {
-                const li = document.createElement('li');
-                li.style.marginBottom = "5px";
-                li.textContent = `🔹 ${data[key].task}`;
-                listEvent.appendChild(li);
-            });
+        activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
+            task: text,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            if (inputEvent) inputEvent.value = '';
+            loadCalendarEventsModule(calSelectedDateStr);
         });
-    }
-});
+    };
+}
 
-// 點擊卡片翻面
-document.getElementById('vocab-card').addEventListener('click', () => {
-    const back = document.getElementById('card-back');
-    back.style.display = back.style.display === 'none' ? 'block' : 'none';
-});
+function loadCalendarEventsModule(dateStr) {
+    const user = firebase.auth().currentUser;
+    if (!user || !listEvent) return;
+    const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
+    if (!activeDb) return;
 
-// 切換字卡
-document.getElementById('next-card').addEventListener('click', (e) => {
-    e.stopPropagation(); // 防止觸發翻面
-    if (currentCardIndex < currentReviewList.length - 1) {
-        currentCardIndex++; renderCard();
-    } else {
-        alert('太棒了！這個資料夾的字卡都複習完囉！🎉');
-    }
-});
-document.getElementById('prev-card').addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (currentCardIndex > 0) {
-        currentCardIndex--; renderCard();
-    }
-});
-
-// 6. 單字重新分類（搬家功能）
-document.getElementById('move-vocab-btn').addEventListener('click', () => {
-    const user = auth.currentUser;
-    if (!user || currentReviewList.length === 0) return;
-
-    const currentItem = currentReviewList[currentCardIndex];
-    const targetFolder = document.getElementById('move-folder-select').value;
-
-    if (currentItem.currentFolder === targetFolder) return alert('單字已經在這個資料夾裡囉！');
-
-    database.ref(`users/${user.uid}/folders/${targetFolder}/${currentItem.word}`).set({
-        translation: currentItem.translation,
-        usage: currentItem.usage,
-        example: currentItem.example,
-        savedAt: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
-        return database.ref(`users/${user.uid}/folders/${currentItem.currentFolder}/${currentItem.word}`).remove();
-    }).then(() => {
-        alert(`成功將 [${currentItem.word}] 移至【${targetFolder}】！`);
-        document.getElementById('review-card-container').style.display = 'none';
-        loadBookshelf();
+    activeDb.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
+        listEvent.innerHTML = '';
+        const data = snapshot.val();
+        if (!data) {
+            listEvent.innerHTML = '<li style="color:#aaa; list-style:none; font-size:13px; padding-left: 5px;">當天還沒有排入複習任務。</li>';
+            return;
+        }
+        Object.keys(data).forEach(key => {
+            const li = document.createElement('li');
+            li.style.cssText = "margin-bottom: 6px; font-size:13px; list-style: none; padding-left: 5px; color: #fff;";
+            li.textContent = `🔹 ${data[key].task}`;
+            listEvent.appendChild(li);
+        });
     });
-});
-
-// 7. 升級版的安全登入狀態監聽（融合原本的畫面切換與新書架載入）
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        updateUserDisplay(user);
-        showSection('app');
-    loadBookshelf(); // 登入成功，載入精裝書架
-    // 啟動即時同步資料夾與書架監聽器
-    if (typeof startListeningToFolders === 'function') startListeningToFolders(user);
-    } else {
-        showSection('login');
-        if (typeof clearResult === "function") clearResult();
-        const bookshelf = document.getElementById('bookshelf');
-        if(bookshelf) bookshelf.innerHTML = '請先登入以檢視個人精裝書架。';
-        document.getElementById('review-card-container').style.display = 'none';
-        document.getElementById('search-result-container').style.display = 'none';
-    }
-});
-
-// ==========================================
-// 🛠️ 建立資料夾功能（終極無懈可擊版 - 解決網頁載入時間差）
-// ==========================================
-function setupFolderCreation() {
-    const btn = document.getElementById('create-folder-btn');
-    const input = document.getElementById('new-folder-input');
-    
-    console.log("【終極診斷】按鈕元件狀態：", btn);
-    console.log("【終極診斷】輸入框元件狀態：", input);
-
-    if (btn && input) {
-        btn.onclick = function() {
-            console.log("💥 偵測到建立資料夾按鈕被點擊！");
-            const folderName = input.value.trim();
-            const user = firebase.auth().currentUser;
-            
-            console.log("目前登入的用戶：", user ? user.displayName : "未登入");
-
-            if (!user) { alert("請先登入喔！"); return; }
-            if (!folderName) { alert("請輸入資料夾名稱！"); return; }
-
-            // 寫入 Firebase 資料庫
-            database.ref('users/' + user.uid + '/folders').push({
-                name: folderName,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                alert("🎉 資料夾建立成功！");
-                input.value = ''; // 清空輸入框
-                if (typeof loadFolders === 'function') loadFolders();
-            }).catch((error) => {
-                console.error("❌ Firebase 儲存失敗原因：", error);
-            });
-        };
-        console.log("✅ 建立資料夾按鈕電線對接成功！功能已就緒。");
-    } else {
-        console.error("❌ 錯誤：找不到按鈕或輸入框，請確認 HTML 帶有對應的 ID！");
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupFolderCreation);
-} else {
-    setupFolderCreation();
 }
 
 // ==========================================
-// 🔄 全自動即時同步資料夾、選單與書架功能
+// 🚪 登出時自動解綁監聽器 (安全防漏機制)
 // ==========================================
-function startListeningToFolders(user) {
-  if (!user) return;
-
-  const folderSelect = document.getElementById('folder-select');
-  const moveFolderSelect = document.getElementById('move-folder-select');
-  const bookshelf = document.getElementById('bookshelf');
-
-  console.log("📡 開始即時監聽 Firebase 資料夾變動...");
-
-  const refPath = 'users/' + user.uid + '/folders';
-  // 先解除舊的監聽器，避免重複觸發
-  database.ref(refPath).off();
-
-  // 監聽該登入用戶路徑下的 folders 資料變動 (.on 代表即時同步)
-  database.ref(refPath).on('value', (snapshot) => {
-    // 1. 先清空舊的選單與書架內容，避免重複疊加
-    if (folderSelect) folderSelect.innerHTML = '<option value="">-- 請選擇資料夾 --</option>';
-    if (moveFolderSelect) moveFolderSelect.innerHTML = '<option value="">-- 請選擇資料夾 --</option>';
-    if (bookshelf) bookshelf.innerHTML = '';
-
-    const folders = snapshot.val();
-
-    // 如果資料庫是空的、還沒有任何資料夾
-    if (!folders) {
-      if (bookshelf) bookshelf.innerHTML = '<p style="color: #bbb; padding: 10px;">目前書架空空如也，快在上方建立一個吧！</p>';
-      return;
-    }
-
-    // 2. 開始把資料庫裡的資料夾，一個一個畫到網頁上
-    Object.keys(folders).forEach((folderId) => {
-      const folder = folders[folderId];
-
-      // (A) 加進「儲存至資料夾」下拉選單
-      if (folderSelect) {
-        const opt = document.createElement('option');
-        opt.value = folderId;
-        opt.textContent = folder.name;
-        folderSelect.appendChild(opt);
-      }
-
-      // (B) 加進「搬家」下拉選單
-      if (moveFolderSelect) {
-        const opt = document.createElement('option');
-        opt.value = folderId;
-        opt.textContent = folder.name;
-        moveFolderSelect.appendChild(opt);
-      }
-
-      // (C) 漂亮的精裝書架小盒子
-      if (bookshelf) {
-        const folderDiv = document.createElement('div');
-        folderDiv.className = 'folder-book';
-        folderDiv.style.cssText = "background: linear-gradient(135deg, #E040FB, #00E5FF); color: white; padding: 15px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; min-width: 110px; transition: transform 0.2s;";
-        folderDiv.textContent = '📘 ' + folder.name;
-
-        // 點擊書架上的資料夾（未來可以擴充讀取該資料夾單字的功能）
-        folderDiv.onclick = () => {
-          alert("📂 妳點擊了資料夾： " + folder.name);
-        };
-        bookshelf.appendChild(folderDiv);
-      }
+if (typeof firebase !== 'undefined') {
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            if (safeMenuToggleBtn) safeMenuToggleBtn.style.display = 'block';
+        } else {
+            if (safeMenuToggleBtn) safeMenuToggleBtn.style.display = 'none';
+            if (safeSideDrawer) safeSideDrawer.style.left = '-450px';
+        }
     });
-    console.log("✨ 網頁選單與書架已同步更新完畢！");
-  });
 }
 
-// 登出時解除所有 users 下的監聽，避免殘留
-auth.onAuthStateChanged((u) => {
-  if (!u) {
-    try { database.ref('users').off(); } catch (e) { /* ignore */ }
-  }
+firebase.auth().onAuthStateChanged((u) => {
+    if (!u) {
+        try { 
+            const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
+            if(activeDb) activeDb.ref('users').off(); 
+        } catch (e) { /* 靜態忽略 */ }
+    }
 });
