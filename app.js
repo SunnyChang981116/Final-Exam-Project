@@ -16,13 +16,13 @@ const resultExample = document.getElementById('result-example');
 // 1. Firebase 核心初始化設定 
 // ==========================================
 const firebaseConfig = {
-    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", // 這裡保持妳原本那串正確的金鑰
+    apiKey: "AIzaSyBbQbjdNJZEhmSzcHSK7XKYlPeYj9jT2qk", 
     authDomain: "examguardian-72fe2.firebaseapp.com",
     projectId: "examguardian-72fe2",
     storageBucket: "examguardian-72fe2.appspot.com",
     messagingSenderId: "565039014631",
     appId: "1:565039014631:web:d8dfb3b28b7e283286f903",
-    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/" // 👈 檢查這行有沒有在引號裡！
+    databaseURL: "https://examguardian-72fe2-default-rtdb.firebaseio.com/" 
 };
 
 // 初始化 Firebase
@@ -34,16 +34,12 @@ if (!firebase.apps.length) {
 const database = firebase.database();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
-// ⚡ 這裡就是第一步要補的地方！把資料夾按鈕的電線接上
 const createFolderBtn = document.getElementById('create-folder-btn');
 const folderInput = document.getElementById('new-folder-input');
 
-
 // ==========================================
-// 頂端設定結束，下方保留妳原本的程式碼
+// 2. 基礎流程控制與登入狀態監聽
 // ==========================================
-
-
 auth.getRedirectResult().then((result) => {
     if (result.user) {
         console.log("跳轉登入成功，已取得使用者資訊：", result.user);
@@ -51,6 +47,7 @@ auth.getRedirectResult().then((result) => {
 }).catch((error) => {
     console.error("跳轉驗證失敗原因：", error);
 });
+
 function showSection(section) {
   if (section === 'login') {
     loginSection.classList.remove('hidden');
@@ -66,17 +63,19 @@ function updateUserDisplay(user) {
   userDisplay.textContent = displayName;
 }
 
+// 監聽登入狀態切換
 auth.onAuthStateChanged((user) => {
   if (user) {
     updateUserDisplay(user);
     showSection('app');
+    loadBookshelf();         // 登入成功後，載入專屬書架資料
+    initCalendarModule();   // 🛠️ 核心修正：主畫面是行事曆，登入成功就立刻畫出月曆！
   } else {
     showSection('login');
     clearResult();
   }
 });
 
-// ==================== 🔐 終極回歸：最穩定彈出視窗登入 ====================
 if (googleLoginButton) {
     googleLoginButton.addEventListener('click', async () => {
         try {
@@ -91,7 +90,6 @@ if (googleLoginButton) {
     });
 }
 
-
 signOutButton.addEventListener('click', async () => {
   try {
     await auth.signOut();
@@ -101,6 +99,9 @@ signOutButton.addEventListener('click', async () => {
   }
 });
 
+// ==========================================
+// 3. 單字 API 查詢功能
+// ==========================================
 searchButton.addEventListener('click', () => {
   const word = wordInput.value.trim();
   if (!word) {
@@ -216,12 +217,8 @@ function mockRootDecomposition(word) {
 
 function saveToGoogleSheets(word, def, ex) {
     const user = firebase.auth().currentUser;
-    if (!user) {
-        console.log("未登入，不儲存單字");
-        return; 
-    }
+    if (!user) return; 
 
-    // ✨ 脫胎換骨！直接把單字存進 Firebase
     database.ref('users/' + user.uid + '/all_words').push({
         word: word,
         definition: def,
@@ -233,19 +230,20 @@ function saveToGoogleSheets(word, def, ex) {
         console.error("Firebase 儲存單字失敗：", error);
     });
 }
-// ==================== 📂 方案 B：自訂資料夾與片語書架全新核心邏輯 ====================
 
-let currentReviewList = [];
-let currentCardIndex = 0;
-let userFoldersList = ["📥 未分類查詢紀錄"]; // 內建系統預設資料夾
+// ==========================================
+// 4. 自訂書架與字卡核心邏輯
+// ==========================================
 
-// 1. 監聽原本查詢按鈕的額外動作：讓儲存資料夾區塊與查詢結果同步出現
-document.getElementById('search-button').addEventListener('click', () => {
-    const word = document.getElementById('word-input').value.trim();
+let currentReviewList = []; // 複習單字陣列
+let currentCardIndex = 0;   // 目前翻到第幾張
+let userFoldersList = ["📥 未分類查詢紀錄"]; 
+
+// 點擊查詢按鈕同步跳出資料夾儲存詢問區
+searchButton.addEventListener('click', () => {
+    const word = wordInput.value.trim();
     if (word) {
-        // 給 API 一點反應時間，隨後顯示儲存選單
         setTimeout(() => {
-            const resultCard = document.getElementById('result-card');
             if (resultCard && !resultCard.classList.contains('hidden')) {
                 document.getElementById('result-word-b').innerText = `想要儲存「${word}」嗎？`;
                 document.getElementById('search-result-container').style.display = 'block';
@@ -254,43 +252,43 @@ document.getElementById('search-button').addEventListener('click', () => {
     }
 });
 
-// 2. 建立新資料夾功能
-document.getElementById('create-folder-btn').addEventListener('click', () => {
-    const user = auth.currentUser;
-    if (!user) return alert('請先登入 Google 帳號！');
+// 建立新資料夾
+if (createFolderBtn) {
+    createFolderBtn.addEventListener('click', () => {
+        const user = auth.currentUser;
+        if (!user) return alert('請先登入 Google 帳號！');
 
-    const folderName = document.getElementById('new-folder-input').value.trim();
-    if (!folderName) return alert('請輸入資料夾名稱！');
-    if (folderName === "📥 未分類查詢紀錄") return alert('不能建立與系統預設相同的資料夾名稱！');
+        const folderName = folderInput.value.trim();
+        if (!folderName) return alert('請輸入資料夾名稱！');
+        if (folderName === "📥 未分類查詢紀錄") return alert('不能建立與系統預設相同的資料夾名稱！');
 
-    // 寫入 Firebase 使用者的資料夾清單
-    database.ref(`users/${user.uid}/customFolders/${folderName}`).set(true)
-    .then(() => {
-        alert(`成功建立資料夾：【${folderName}】！`);
-        document.getElementById('new-folder-input').value = '';
-        loadBookshelf(); // 重新整理書架
+        database.ref(`users/${user.uid}/customFolders/${folderName}`).set(true)
+        .then(() => {
+            alert(`成功建立資料夾：【${folderName}】！`);
+            folderInput.value = '';
+            loadBookshelf(); 
+        });
     });
-});
+}
 
-// 3. 確認儲存單字功能
+// 確認儲存單字至資料夾
 document.getElementById('save-vocab-btn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return alert('請先登入 Google 帳號！');
     
-    const word = document.getElementById('word-input').value.trim().toLowerCase();
+    const word = wordInput.value.trim().toLowerCase();
     if (!word) return alert('找不到正在查詢的單字！');
 
     let selectedFolder = document.getElementById('folder-select').value;
     if (!selectedFolder) selectedFolder = "📥 未分類查詢紀錄";
 
-    // 撈取畫面上現有的定義與例句當作小卡內容
     const defElement = document.getElementById('result-definition');
     const exElement = document.getElementById('result-example');
     const definitionText = defElement ? defElement.innerText : "暫無定義";
     const exampleText = exElement ? exElement.innerText : "暫無例句";
 
     database.ref(`users/${user.uid}/folders/${selectedFolder}/${word}`).set({
-        translation: definitionText.split('\n')[0] || "已儲存", // 抓取第一條定義當主翻譯
+        translation: definitionText.split('\n')[0] || "已儲存", 
         usage: "自訂資料夾收藏",
         example: exampleText.split('\n')[0] || "暫無實用例句",
         savedAt: firebase.database.ServerValue.TIMESTAMP
@@ -300,14 +298,13 @@ document.getElementById('save-vocab-btn').addEventListener('click', () => {
     });
 });
 
-// 4. 載入與即時同步書架
+// 載入與渲染書架按鈕
 function loadBookshelf() {
     const user = auth.currentUser;
     if (!user) return;
 
     userFoldersList = ["📥 未分類查詢紀錄"];
 
-    // 抓取自訂資料夾
     database.ref(`users/${user.uid}/customFolders`).once('value', (customSnapshot) => {
         if (customSnapshot.exists()) {
             Object.keys(customSnapshot.val()).forEach(f => userFoldersList.push(f));
@@ -315,10 +312,10 @@ function loadBookshelf() {
 
         updateDropdownOptions();
 
-        // 統計各資料夾字數並繪製書架
         database.ref(`users/${user.uid}/folders`).once('value', (vocabSnapshot) => {
             const vocabData = vocabSnapshot.val() || {};
             const bookshelf = document.getElementById('bookshelf');
+            if (!bookshelf) return;
             bookshelf.innerHTML = '';
 
             userFoldersList.forEach(folderName => {
@@ -326,7 +323,7 @@ function loadBookshelf() {
                 
                 const folderBtn = document.createElement('button');
                 folderBtn.innerHTML = `📔 <strong>${folderName}</strong><br><small style="opacity:0.7;">已存: ${count} 字</small>`;
-                folderBtn.style.cssText = "padding: 15px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 10px; cursor: pointer; text-align: left; min-width: 140px; transition: 0.3s;";
+                folderBtn.style.cssText = "padding: 15px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 10px; cursor: pointer; text-align: left; min-width: 140px; transition: 0.3s; margin: 5px;";
                 
                 folderBtn.onmouseover = () => folderBtn.style.background = "rgba(255,255,255,0.3)";
                 folderBtn.onmouseout = () => folderBtn.style.background = "rgba(255,255,255,0.15)";
@@ -342,7 +339,6 @@ function loadBookshelf() {
     });
 }
 
-// 刷新所有下拉選單
 function updateDropdownOptions() {
     const folderSelect = document.getElementById('folder-select');
     const moveFolderSelect = document.getElementById('move-folder-select');
@@ -362,7 +358,7 @@ function updateDropdownOptions() {
     });
 }
 
-// 5. 字卡快刷複習模式
+// 啟動字卡複習
 function startReviewSession(folderName, wordsData) {
     currentReviewList = Object.keys(wordsData).map(word => {
         return { 
@@ -380,40 +376,31 @@ function startReviewSession(folderName, wordsData) {
     renderCard();
 }
 
-// =================================================================
-// 🎯 詠晴專屬專案：字卡渲染、一字多義、IG風格側邊欄與行事曆終極核心
-// (從第 340 行起全面安全對接版，絕不重複宣告、絕不黑屏)
-// =================================================================
-
-// 🔄 1. 字卡渲染核心（完美對接妳的 vocabList 變數）
+// 🛠️ 核心修正：將原本找錯的 vocabList 變數修正為正確的 currentReviewList
 function renderCard() {
-    // 防呆：確保單字清單存在且有資料
-    if (typeof vocabList === 'undefined' || !vocabList || vocabList.length === 0) {
+    if (!currentReviewList || currentReviewList.length === 0) {
         console.log("💡 目前書架資料夾內尚無單字可供複習。");
         return;
     }
     
-    // 確保索引值安全
     if (typeof currentCardIndex === 'undefined') currentCardIndex = 0;
     
-    const currentItem = vocabList[currentCardIndex];
+    const currentItem = currentReviewList[currentCardIndex];
     if (!currentItem) return;
 
-    // A. 呈現單字
+    // A. 填入英文單字
     const wordEl = document.getElementById('card-word');
     if (wordEl) wordEl.innerText = currentItem.word || "Unknown";
     
-    // B. 🧠 聰明解析一字多義與英文定義錯置
+    // B. 解析中文翻譯或拆解分號
     const translationEl = document.getElementById('card-translation');
     if (translationEl) {
         const transText = currentItem.translation || "";
-        // 判斷是否被抓成了長串英文定義
         const isEnglishJson = /[a-zA-Z]{5,}/.test(transText) && !/[\u4e00-\u9fa5]/.test(transText);
         
         if (isEnglishJson) {
             translationEl.innerHTML = `<span style="color: #ff5555; font-size:14px;">⚠️ 欄位誤植英文定義</span><br><small style="color: #bbb; font-size: 12px; line-height: 1.2;">${transText}</small>`;
         } else if (transText.includes(';') || transText.includes('；')) {
-            // 自動偵測中英文分號，拆開變成漂亮的 1. 2. 3. 清單
             const delimiter = transText.includes(';') ? ';' : '；';
             const meanings = transText.split(delimiter);
             translationEl.innerHTML = meanings.map((m, idx) => `<div style="margin-top:4px;">${idx + 1}. ${m.trim()}</div>`).join('');
@@ -422,11 +409,11 @@ function renderCard() {
         }
     }
 
-    // C. 呈現用法說明
+    // C. 填入用法
     const usageEl = document.getElementById('card-usage');
     if (usageEl) usageEl.innerText = currentItem.usage || "自訂資料夾收藏";
     
-    // D. 呈現例句防呆
+    // D. 填入例句
     const exampleEl = document.getElementById('card-example');
     if (exampleEl) {
         if (currentItem.example && !currentItem.example.includes("目前無可顯示")) {
@@ -436,46 +423,66 @@ function renderCard() {
         }
     }
 
-    // E. 預設隱藏卡片背面
+    // E. 重設卡片狀態為：蓋起來（隱藏背面）
     const backEl = document.getElementById('card-back');
     if (backEl) backEl.style.display = 'none';
 }
 
-// 📱 2. 側邊欄控制（直接綁定，不使用 const 宣告，百分之百避免重複宣告衝突！）
-if (document.getElementById('menu-toggle-btn') && document.getElementById('side-drawer')) {
+// 🛠️ 核心修正：綁定「點擊字卡本體」翻面的功能
+const vocabCardBtn = document.getElementById('vocab-card');
+if (vocabCardBtn) {
+    vocabCardBtn.addEventListener('click', () => {
+        const backEl = document.getElementById('card-back');
+        if (backEl) {
+            if (backEl.style.display === 'none') {
+                backEl.style.display = 'block'; // 打開背面
+            } else {
+                backEl.style.display = 'none';  // 收起背面
+            }
+        }
+    });
+}
+
+// 🛠️ 核心修正：接上「上一個／下一個」單字按鈕的控制電線
+if (document.getElementById('prev-card')) {
+    document.getElementById('prev-card').onclick = () => {
+        if (currentReviewList.length === 0) return;
+        currentCardIndex--;
+        if (currentCardIndex < 0) {
+            currentCardIndex = currentReviewList.length - 1; // 循環到最後一張
+        }
+        renderCard();
+    };
+}
+
+if (document.getElementById('next-card')) {
+    document.getElementById('next-card').onclick = () => {
+        if (currentReviewList.length === 0) return;
+        currentCardIndex++;
+        if (currentCardIndex >= currentReviewList.length) {
+            currentCardIndex = 0; // 循環回到第一張
+        }
+        renderCard();
+    };
+}
+
+// ==========================================
+// 5. 側邊欄抽屜開關控制
+// ==========================================
+if (document.getElementById('menu-toggle-btn')) {
     document.getElementById('menu-toggle-btn').onclick = () => { 
         document.getElementById('side-drawer').style.left = '0px'; 
     };
 }
-if (document.getElementById('close-drawer-btn') && document.getElementById('side-drawer')) {
+if (document.getElementById('close-drawer-btn')) {
     document.getElementById('close-drawer-btn').onclick = () => { 
-        document.getElementById('side-drawer').style.left = '-450px'; 
+        document.getElementById('side-drawer').style.left = '-500px'; 
     };
 }
 
-// 側邊欄內部頁籤切換 (單字書架 vs 複習月曆)
-if (document.getElementById('tab-vocab-btn') && document.getElementById('tab-calendar-btn')) {
-    document.getElementById('tab-vocab-btn').onclick = () => {
-        document.getElementById('tab-vocab-btn').style.background = '#E040FB';
-        document.getElementById('tab-vocab-btn').style.color = '#fff';
-        document.getElementById('tab-calendar-btn').style.background = 'rgba(255,255,255,0.1)';
-        document.getElementById('tab-calendar-btn').style.color = '#fff';
-        if(document.getElementById('drawer-vocab-content')) document.getElementById('drawer-vocab-content').style.display = 'block';
-        if(document.getElementById('drawer-calendar-content')) document.getElementById('drawer-calendar-content').style.display = 'none';
-    };
-
-    document.getElementById('tab-calendar-btn').onclick = () => {
-        document.getElementById('tab-calendar-btn').style.background = '#00E5FF';
-        document.getElementById('tab-calendar-btn').style.color = '#111';
-        document.getElementById('tab-vocab-btn').style.background = 'rgba(255,255,255,0.1)';
-        document.getElementById('tab-vocab-btn').style.color = '#fff';
-        if(document.getElementById('drawer-vocab-content')) document.getElementById('drawer-vocab-content').style.display = 'none';
-        if(document.getElementById('drawer-calendar-content')) document.getElementById('drawer-calendar-content').style.display = 'block';
-        initCalendarModule(); // 動態畫月曆
-    };
-}
-
-// 📅 3. 動態行事曆月曆渲染大腦
+// ==========================================
+// 6. 讀書計畫行事曆核心模組
+// ==========================================
 let calCurrentDate = new Date();
 let calSelectedDateStr = "";
 
@@ -492,20 +499,22 @@ function initCalendarModule() {
     const firstDayIndex = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
 
+    // 填塞上個月的空白格子
     for (let i = 0; i < firstDayIndex; i++) {
         daysGrid.appendChild(document.createElement('div'));
     }
 
+    // 渲染日期格子
     for (let day = 1; day <= totalDays; day++) {
         const dayCell = document.createElement('div');
         dayCell.textContent = day;
-        dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; text-align: center; transition: all 0.2s;";
+        dayCell.style.cssText = "padding: 10px; background: rgba(255,255,255,0.06); border-radius: 6px; cursor: pointer; font-size: 14px; text-align: center; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05);";
         
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         
         dayCell.onclick = () => {
-            Array.from(daysGrid.children).forEach(c => { if(c.style) c.style.border = "none"; });
-            dayCell.style.border = "2px solid #00E5FF";
+            Array.from(daysGrid.children).forEach(c => { if(c.style) c.style.borderColor = "rgba(255,255,255,0.05)"; });
+            dayCell.style.borderColor = "#00E5FF";
             calSelectedDateStr = dateStr;
             if (document.getElementById('selected-date-title')) {
                 document.getElementById('selected-date-title').textContent = `📅 日期：${dateStr}`;
@@ -516,7 +525,7 @@ function initCalendarModule() {
     }
 }
 
-// 月份切換按鈕
+// 月份上下調整
 if (document.getElementById('prev-month-btn')) { 
     document.getElementById('prev-month-btn').onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; 
 }
@@ -524,17 +533,17 @@ if (document.getElementById('next-month-btn')) {
     document.getElementById('next-month-btn').onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; 
 }
 
-// 📡 4. 行事曆 Firebase 資料庫連線模組
+// 新增任務至行事曆
 if (document.getElementById('add-event-btn')) {
     document.getElementById('add-event-btn').onclick = () => {
         const text = document.getElementById('event-input') ? document.getElementById('event-input').value.trim() : '';
         const user = firebase.auth().currentUser;
-        if (!user || !calSelectedDateStr || !text) return;
+        if (!user || !calSelectedDateStr || !text) {
+            if(!calSelectedDateStr) alert('請先在月曆上點選一個日期喔！');
+            return;
+        }
 
-        const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-        if (!activeDb) return;
-
-        activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
+        database.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
             task: text,
             createdAt: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
@@ -544,37 +553,36 @@ if (document.getElementById('add-event-btn')) {
     };
 }
 
+// 讀取行事曆日程
 function loadCalendarEventsModule(dateStr) {
     const user = firebase.auth().currentUser;
     if (!user || !document.getElementById('event-list')) return;
-    const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
-    if (!activeDb) return;
 
-    activeDb.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
+    database.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
         const listEvent = document.getElementById('event-list');
         listEvent.innerHTML = '';
         const data = snapshot.val();
         if (!data) {
-            listEvent.innerHTML = '<li style="color:#aaa; list-style:none; font-size:13px; padding: 4px;">當天還沒有排入複習任務。</li>';
+            listEvent.innerHTML = '<li style="color:#aaa; list-style:none; font-size:14px; padding: 4px;">當天還沒有排入複習任務。</li>';
             return;
         }
         Object.keys(data).forEach(key => {
             const li = document.createElement('li');
-            li.style.cssText = "margin-bottom: 6px; font-size:13px; list-style: none; color: #fff; padding-left: 4px;";
+            li.style.cssText = "margin-bottom: 8px; font-size:14px; list-style: none; color: #fff; padding: 6px; background: rgba(255,255,255,0.05); border-radius: 6px; border-left: 3px solid #00E5FF;";
             li.textContent = `🔹 ${data[key].task}`;
             listEvent.appendChild(li);
         });
     });
 }
 
-// 🔐 5. 登入狀態守衛：控制主按鈕顯示
+// 🔐 額外側邊欄按鈕狀態安全保護
 if (typeof firebase !== 'undefined') {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             if (document.getElementById('menu-toggle-btn')) document.getElementById('menu-toggle-btn').style.display = 'block';
         } else {
             if (document.getElementById('menu-toggle-btn')) document.getElementById('menu-toggle-btn').style.display = 'none';
-            if (document.getElementById('side-drawer')) document.getElementById('side-drawer').style.left = '-450px';
+            if (document.getElementById('side-drawer')) document.getElementById('side-drawer').style.left = '-500px';
         }
     });
 }
