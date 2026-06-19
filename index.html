@@ -53,7 +53,19 @@
       border-radius: 6px; border: none; box-sizing: border-box;
       background: rgba(255,255,255,0.9); color: #333;
     }
+    /* =========================================
+       修復 FullCalendar 年曆視圖 (Year View) 在深色模式下的反白問題
+       ========================================= */
+    .fc .fc-multimonth-daygrid { background: #12121c !important; }
+    .fc-theme-standard .fc-scrollgrid { border-color: rgba(255,255,255,0.1) !important; }
+    .fc-daygrid-day { border-color: rgba(255,255,255,0.05) !important; }
+    .fc .fc-multimonth-title { color: #00E5FF !important; font-weight: bold; padding: 10px 0; }
+    .fc .fc-multimonth-daygrid-table, .fc .fc-multimonth-header-table { background: rgba(255,255,255,0.02) !important; color: white; }
+    /* 讓年曆上的點點更圓潤明顯 */
+    .fc-daygrid-dot-event { padding: 2px; border-radius: 4px; }
+    .fc .fc-daygrid-body-unbalanced .fc-daygrid-day-events { min-height: 1.5em; }
   </style>
+  
 </head>
 <body style="background: #12121c; color: white; font-family: sans-serif; margin: 0; padding: 0;">
 
@@ -96,13 +108,17 @@
       <label style="font-size: 13px; color: #bbb;">結束時間</label>
       <input type="datetime-local" id="modal-end">
       
-      <label style="font-size: 13px; color: #bbb;">標籤顏色</label>
+      <label style="font-size: 13px; color: #bbb;">行程分類 (顏色標記)</label>
       <select id="modal-color">
-        <option value="#E040FB">🟣 紫色 (預設)</option>
-        <option value="#00E5FF">🔵 藍色 (重要)</option>
-        <option value="#FF5252">🔴 紅色 (緊急)</option>
-        <option value="#4CAF50">🟢 綠色 (完成)</option>
-        <option value="#FFC107">🟡 黃色 (待辦)</option>
+        <option value="#FF5252">🔴 紅色 (緊急 / 重大事件)</option>
+        <option value="#FF3D00">🔥 橘紅 (考試 / 測驗)</option>
+        <option value="#FFC107">🟡 黃色 (重要 / 待辦作業)</option>
+        <option value="#4CAF50">🟢 綠色 (學校活動 / 社團)</option>
+        <option value="#00E5FF">🔵 藍色 (個人行程 / 休閒)</option>
+        <option value="#FF9800">🟠 橘色 (補習 / 進修)</option>
+        <option value="#9C27B0">🟤 棕色 (瑣事 / 雜項)</option>
+        <option value="#E91E63">🩷 粉紅 (特殊紀念日)</option>
+        <option value="#E040FB">🟣 紫色 (預設一般行程)</option>
       </select>
 
       <div style="display: flex; gap: 10px; margin-top: 10px;">

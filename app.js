@@ -210,10 +210,16 @@ if (document.getElementById('close-drawer-btn')) {
 // 6. 查單字與書架功能 (保留妳原本寫好的邏輯)
 // ==========================================
 // API 查詢
+// ==========================================
+// 6. 查單字與書架功能 (升級版：加入雙 API 連動翻譯)
+// ==========================================
 searchButton.addEventListener('click', () => {
     const word = wordInput.value.trim().toLowerCase();
     if (!word) return;
     
+    document.getElementById('search-button').innerText = "解析中..."; // 給點回饋
+    
+    // API 1: 查英文定義與音標
     fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`)
       .then(res => res.json())
       .then(data => {
@@ -222,14 +228,31 @@ searchButton.addEventListener('click', () => {
         document.getElementById('result-phonetic').textContent = entry.phonetics[0]?.text || '';
         document.getElementById('result-definition').innerHTML = `<li>${entry.meanings[0]?.definitions[0]?.definition || '無'}</li>`;
         document.getElementById('result-example').innerHTML = `<li>${entry.meanings[0]?.definitions[0]?.example || '無'}</li>`;
+        
+        // API 2: 呼叫 MyMemory 翻譯 API 抓中文
+        return fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|zh-TW`);
+      })
+      .then(res => res.json())
+      .then(transData => {
+        const chineseDef = transData.responseData.translatedText;
+        // 把中文翻譯塞進介面 (動態在英文定義前面加上中文)
+        document.getElementById('result-definition').innerHTML = 
+            `<li><strong style="color:#00E5FF;">[中文] ${chineseDef}</strong></li>` + 
+            document.getElementById('result-definition').innerHTML;
+            
         resultCard.classList.remove('hidden');
+        document.getElementById('search-button').innerText = "解析";
 
         // 跳出儲存提示
         setTimeout(() => {
             document.getElementById('result-word-b').innerText = `想要儲存「${word}」嗎？`;
             document.getElementById('search-result-container').style.display = 'block';
         }, 800);
-      }).catch(() => alert('查無此單字'));
+      })
+      .catch(() => {
+          alert('查無此單字或網路錯誤');
+          document.getElementById('search-button').innerText = "解析";
+      });
 });
 
 // 書架儲存相關
