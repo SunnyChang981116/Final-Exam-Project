@@ -312,13 +312,20 @@ function updateDropdownOptions() {
     });
 }
 
-// 字卡複習
+// ==========================================
+// 7. 字卡複習與刪除單字功能 (升級版)
+// ==========================================
 let currentReviewList = [];
 let currentCardIndex = 0;
+let currentReviewFolderName = ""; // 紀錄當前在複習哪一個資料夾
 
 function startReviewSession(folderName, wordsData) {
+    currentReviewFolderName = folderName; // 記住資料夾名稱
     currentReviewList = Object.keys(wordsData).map(w => ({
-        word: w, translation: wordsData[w].translation, usage: wordsData[w].usage, example: wordsData[w].example
+        word: w, 
+        translation: wordsData[w].translation, 
+        usage: wordsData[w].usage, 
+        example: wordsData[w].example
     }));
     currentCardIndex = 0;
     document.getElementById('current-folder-title').innerText = `正在複習：${folderName}`;
@@ -327,19 +334,78 @@ function startReviewSession(folderName, wordsData) {
 }
 
 function renderCard() {
-    if(!currentReviewList.length) return;
+    const container = document.getElementById('review-card-container');
+    
+    // 如果單字被刪光了，隱藏字卡區域並重新整理書架
+    if (!currentReviewList.length) {
+        alert("這個資料夾裡面已經沒有單字囉！");
+        container.style.display = 'none';
+        loadBookshelf();
+        return;
+    }
+    
     const item = currentReviewList[currentCardIndex];
     document.getElementById('card-word').innerText = item.word;
     document.getElementById('card-translation').innerText = item.translation;
     document.getElementById('card-usage').innerText = item.usage;
     document.getElementById('card-example').innerText = item.example;
     document.getElementById('card-back').style.display = 'none';
+    
+    // 🌟 動態加入「刪除單字」按鈕 (如果還沒有的話)
+    let deleteBtn = document.getElementById('delete-vocab-btn');
+    if (!deleteBtn) {
+        deleteBtn = document.createElement('button');
+        deleteBtn.id = 'delete-vocab-btn';
+        deleteBtn.innerHTML = '🗑️ 刪除此單字';
+        deleteBtn.style.cssText = "margin-top: 15px; padding: 8px 16px; background: #FF5252; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;";
+        // 把刪除按鈕塞在字卡背面裡面，看答案時才可以刪除（或者放在背面外面，隨妳喜歡）
+        document.getElementById('card-back').appendChild(deleteBtn);
+    }
+    
+    // 🌟 刪除按鈕的點擊邏輯
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation(); // 防止觸發字卡翻面的點擊事件
+        
+        if (confirm(`確定要從【${currentReviewFolderName}】刪除「${item.word}」嗎？`)) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            // 從 Firebase 資料庫移除該單字節點
+            database.ref(`users/${user.uid}/folders/${currentReviewFolderName}/${item.word}`).remove()
+            .then(() => {
+                alert("刪除成功！");
+                // 從目前的暫存陣列中移除該單字
+                currentReviewList.splice(currentCardIndex, 1);
+                
+                // 調整索引指針，避免陣列溢出
+                if (currentCardIndex >= currentReviewList.length) {
+                    currentCardIndex = 0; 
+                }
+                
+                // 重新渲染畫面
+                renderCard();
+                // 後台偷偷重新整理書架上的單字計數
+                loadBookshelf();
+            })
+            .catch(err => alert("刪除失敗：" + err));
+        }
+    };
 }
 
+// 字卡點擊翻面
 document.getElementById('vocab-card').addEventListener('click', () => {
     const back = document.getElementById('card-back');
     back.style.display = back.style.display === 'none' ? 'block' : 'none';
 });
 
-document.getElementById('prev-card').onclick = () => { currentCardIndex = (currentCardIndex - 1 + currentReviewList.length) % currentReviewList.length; renderCard(); };
-document.getElementById('next-card').onclick = () => { currentCardIndex = (currentCardIndex + 1) % currentReviewList.length; renderCard(); };
+// 上下張切換
+document.getElementById('prev-card').onclick = () => { 
+    if(!currentReviewList.length) return;
+    currentCardIndex = (currentCardIndex - 1 + currentReviewList.length) % currentReviewList.length; 
+    renderCard(); 
+};
+document.getElementById('next-card').onclick = () => { 
+    if(!currentReviewList.length) return;
+    currentCardIndex = (currentCardIndex + 1) % currentReviewList.length; 
+    renderCard(); 
+};
