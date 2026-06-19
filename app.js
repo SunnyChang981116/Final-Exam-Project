@@ -380,7 +380,59 @@ function startReviewSession(folderName, wordsData) {
     renderCard();
 }
 
-// ==========================================
+// 🔄 重新補上的字卡渲染核心（放在第 384 行安全線正上方）
+function renderCard() {
+    // 防呆：確保 vocabList 存在且有資料，不然不執行
+    if (typeof vocabList === 'undefined' || !vocabList || vocabList.length === 0) {
+        console.log("💡 目前書架資料夾內尚無單字可供複習。");
+        return;
+    }
+    
+    // 確保 currentCardIndex 存在
+    if (typeof currentCardIndex === 'undefined') currentCardIndex = 0;
+    
+    const currentItem = vocabList[currentCardIndex];
+    if (!currentItem) return;
+
+    // 1. 單字主體
+    const wordEl = document.getElementById('card-word');
+    if (wordEl) wordEl.innerText = currentItem.word || "Unknown";
+    
+    // 2. 🧠 一字多義與英文定義塞錯格子的聰明解析
+    const translationEl = document.getElementById('card-translation');
+    if (translationEl) {
+        const transText = currentItem.translation || "";
+        const isEnglishJson = /[a-zA-Z]{5,}/.test(transText) && !/[\u4e00-\u9fa5]/.test(transText);
+        
+        if (isEnglishJson) {
+            translationEl.innerHTML = `<span style="color: #ff5555;">(資料庫欄位誤植)</span><br><small style="color: #bbb; font-size: 13px;">${transText}</small>`;
+        } else if (transText.includes(';') || transText.includes('；')) {
+            const delimiter = transText.includes(';') ? ';' : '；';
+            const meanings = transText.split(delimiter);
+            translationEl.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
+        } else {
+            translationEl.innerText = transText || "暫無翻譯";
+        }
+    }
+
+    // 3. 用法說明
+    const usageEl = document.getElementById('card-usage');
+    if (usageEl) usageEl.innerText = currentItem.usage || "自訂資料夾收藏";
+    
+    // 4. 例句防呆與加亮
+    const exampleEl = document.getElementById('card-example');
+    if (exampleEl) {
+        if (currentItem.example && !currentItem.example.includes("目前無可顯示")) {
+            exampleEl.innerText = currentItem.example;
+        } else {
+            exampleEl.innerText = "💡 這個單字目前還沒有添加實用例句喔！";
+        }
+    }
+
+    // 5. 隱藏背面
+    const backEl = document.getElementById('card-back');
+    if (backEl) backEl.style.display = 'none';
+}
 // =================================================================
 // 📱 384行開始：IG 風格側邊欄抽屜與行事曆控制核心 (解開外殼、完美不衝突版)
 // =================================================================
