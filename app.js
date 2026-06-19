@@ -358,7 +358,7 @@ function renderCard() {
         deleteBtn.id = 'delete-vocab-btn';
         deleteBtn.innerHTML = '🗑️ 刪除此單字';
         deleteBtn.style.cssText = "margin-top: 15px; padding: 8px 16px; background: #FF5252; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;";
-        // 把刪除按鈕塞在字卡背面裡面，看答案時才可以刪除（或者放在背面外面，隨妳喜歡）
+        // 把刪除按鈕塞在字卡背面裡面，看答案時才可以刪除
         document.getElementById('card-back').appendChild(deleteBtn);
     }
     
