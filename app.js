@@ -380,13 +380,44 @@ function startReviewSession(folderName, wordsData) {
     renderCard();
 }
 
-// 渲染字卡內容
+// 🔄 優化後的渲染字卡內容功能（支援一字多義與防閃對齊）
 function renderCard() {
     const currentItem = currentReviewList[currentCardIndex];
+    if (!currentItem) return;
+
+    // 1. 單字主體
     document.getElementById('card-word').innerText = currentItem.word;
-    document.getElementById('card-translation').innerText = currentItem.translation;
-    document.getElementById('card-usage').innerText = currentItem.usage;
-    document.getElementById('card-example').innerText = currentItem.example;
+    
+    // 2. 🧠 聰明解析一字多義
+    const translationElement = document.getElementById('card-translation');
+    if (translationElement) {
+        // 如果翻譯裡包含英文字、分號或本來就是陣列，我們來把它漂亮排版
+        if (typeof currentItem.translation === 'string' && currentItem.translation.includes(';')) {
+            const meanings = currentItem.translation.split(';');
+            translationElement.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
+        } else if (typeof currentItem.translation === 'string' && currentItem.translation.includes('；')) {
+            const meanings = currentItem.translation.split('；');
+            translationElement.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
+        } else {
+            // 如果只有一個意思，就正常顯示
+            translationElement.innerText = currentItem.translation || "暫無翻譯";
+        }
+    }
+
+    // 3. 用法說明
+    document.getElementById('card-usage').innerText = currentItem.usage || "自訂資料夾收藏";
+    
+    // 4. 例句防呆（如果沒有例句，給個好看的小燈泡提示）
+    const exampleElement = document.getElementById('card-example');
+    if (exampleElement) {
+        if (currentItem.example && currentItem.example !== "詞條目前無可顯示的例句。" && currentItem.example !== "目前無可顯示的例句。") {
+            exampleElement.innerText = currentItem.example;
+        } else {
+            exampleElement.innerText = "💡 這個單字目前還沒有添加實用例句喔！";
+        }
+    }
+
+    // 5. 預設先隱藏背面
     document.getElementById('card-back').style.display = 'none';
 }
 
