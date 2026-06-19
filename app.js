@@ -380,46 +380,165 @@ function startReviewSession(folderName, wordsData) {
     renderCard();
 }
 
-// 🔄 優化後的渲染字卡內容功能（支援一字多義與防閃對齊）
-function renderCard() {
-    const currentItem = currentReviewList[currentCardIndex];
-    if (!currentItem) return;
-
-    // 1. 單字主體
-    document.getElementById('card-word').innerText = currentItem.word;
+// ==========================================
+// 📱 IG 風格側邊欄抽屜與行事曆控制核心 (精簡防撞安全版)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 取得側邊欄專屬元件 (使用獨立命名，保證不與上方變數相撞)
+    const drawerElement = document.getElementById('side-drawer');
+    const toggleMenuBtn = document.getElementById('menu-toggle-btn');
+    const closeMenuBtn = document.getElementById('close-drawer-btn');
     
-    // 2. 🧠 聰明解析一字多義
-    const translationElement = document.getElementById('card-translation');
-    if (translationElement) {
-        // 如果翻譯裡包含英文字、分號或本來就是陣列，我們來把它漂亮排版
-        if (typeof currentItem.translation === 'string' && currentItem.translation.includes(';')) {
-            const meanings = currentItem.translation.split(';');
-            translationElement.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
-        } else if (typeof currentItem.translation === 'string' && currentItem.translation.includes('；')) {
-            const meanings = currentItem.translation.split('；');
-            translationElement.innerHTML = meanings.map((m, idx) => `<br>${idx + 1}. ${m.trim()}`).join('');
-        } else {
-            // 如果只有一個意思，就正常顯示
-            translationElement.innerText = currentItem.translation || "暫無翻譯";
+    const btnTabVocab = document.getElementById('tab-vocab-btn');
+    const btnTabCalendar = document.getElementById('tab-calendar-btn');
+    const contentDrawerVocab = document.getElementById('drawer-vocab-content');
+    const contentDrawerCalendar = document.getElementById('drawer-calendar-content');
+
+    console.log("🚀 [安全診斷] 側邊欄核心模組已成功防撞載入！");
+
+    // 2. 監聽 Firebase 登入狀態以顯示按鈕 (移除重複宣告的 loginSection)
+    if (typeof firebase !== 'undefined') {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                if (toggleMenuBtn) toggleMenuBtn.style.display = 'block';
+            } else {
+                if (toggleMenuBtn) toggleMenuBtn.style.display = 'none';
+                if (drawerElement) drawerElement.style.left = '-450px'; 
+            }
+        });
+    }
+
+    // 3. 側邊欄開關控制
+    if (toggleMenuBtn && drawerElement) {
+        toggleMenuBtn.addEventListener('click', () => { drawerElement.style.left = '0px'; });
+    }
+    if (closeMenuBtn && drawerElement) {
+        closeMenuBtn.addEventListener('click', () => { drawerElement.style.left = '-450px'; });
+    }
+
+    // 4. 頁籤切換 (單字書架 vs 行事曆)
+    if (btnTabVocab && btnTabCalendar && contentDrawerVocab && contentDrawerCalendar) {
+        btnTabVocab.addEventListener('click', () => {
+            btnTabVocab.style.background = '#E040FB';
+            btnTabVocab.style.color = '#fff';
+            btnTabCalendar.style.background = 'rgba(255,255,255,0.1)';
+            btnTabCalendar.style.color = '#fff';
+            contentDrawerVocab.style.display = 'block';
+            contentDrawerCalendar.style.display = 'none';
+        });
+
+        btnTabCalendar.addEventListener('click', () => {
+            btnTabCalendar.style.background = '#00E5FF';
+            btnTabCalendar.style.color = '#111';
+            btnTabVocab.style.background = 'rgba(255,255,255,0.1)';
+            btnTabVocab.style.color = '#fff';
+            contentDrawerVocab.style.display = 'none';
+            contentDrawerCalendar.style.display = 'block';
+            initCalendarModule(); // 初始化月曆
+        });
+    }
+
+    // ==========================================
+    // 📅 月曆動態生成邏輯 (全面加上安全防護防呆)
+    // ==========================================
+    let calCurrentDate = new Date();
+    let calSelectedDateStr = "";
+
+    function initCalendarModule() {
+        const monthTitle = document.getElementById('calendar-month-title');
+        const daysGrid = document.getElementById('calendar-days-grid');
+        if (!daysGrid || !monthTitle) return;
+
+        daysGrid.innerHTML = '';
+        const year = calCurrentDate.getFullYear();
+        const month = calCurrentDate.getMonth();
+
+        monthTitle.textContent = `${year}年 ${month + 1}月`;
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            daysGrid.appendChild(document.createElement('div'));
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.textContent = day;
+            dayCell.style.cssText = "padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 13px; transition: all 0.2s;";
+            
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            dayCell.addEventListener('click', () => {
+                Array.from(daysGrid.children).forEach(c => c.style.border = "none");
+                dayCell.style.border = "2px solid #00E5FF";
+                calSelectedDateStr = dateStr;
+                const titleNode = document.getElementById('selected-date-title');
+                if (titleNode) titleNode.textContent = `📅 日期：${dateStr}`;
+                loadCalendarEventsModule(dateStr);
+            });
+
+            daysGrid.appendChild(dayCell);
         }
     }
 
-    // 3. 用法說明
-    document.getElementById('card-usage').innerText = currentItem.usage || "自訂資料夾收藏";
-    
-    // 4. 例句防呆（如果沒有例句，給個好看的小燈泡提示）
-    const exampleElement = document.getElementById('card-example');
-    if (exampleElement) {
-        if (currentItem.example && currentItem.example !== "詞條目前無可顯示的例句。" && currentItem.example !== "目前無可顯示的例句。") {
-            exampleElement.innerText = currentItem.example;
-        } else {
-            exampleElement.innerText = "💡 這個單字目前還沒有添加實用例句喔！";
-        }
+    // 為月曆按鈕綁定事件 (加上防呆)
+    const btnPrevMonth = document.getElementById('prev-month-btn');
+    const btnNextMonth = document.getElementById('next-month-btn');
+    if (btnPrevMonth) { btnPrevMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() - 1); initCalendarModule(); }; }
+    if (btnNextMonth) { btnNextMonth.onclick = () => { calCurrentDate.setMonth(calCurrentDate.getMonth() + 1); initCalendarModule(); }; }
+
+    // ==========================================
+    // 📡 行事曆 Firebase 資料庫讀寫事件 (加上防呆)
+    // ==========================================
+    const btnAddEvent = document.getElementById('add-event-btn');
+    const inputEvent = document.getElementById('event-input');
+    const listEvent = document.getElementById('event-list');
+
+    if (btnAddEvent) {
+        btnAddEvent.onclick = () => {
+            const text = inputEvent ? inputEvent.value.trim() : '';
+            const user = firebase.auth().currentUser;
+            if (!user) { alert("請先登入！"); return; }
+            if (!calSelectedDateStr) { alert("請先在月曆上選取日期喔！"); return; }
+            if (!text) { alert("請輸入任務內容！"); return; }
+
+            // 自動適應妳原本宣告的資料庫變數名稱 (db 或 database)
+            const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
+            if (!activeDb) { console.error("找不到 Firebase Database 實例"); return; }
+
+            activeDb.ref(`users/${user.uid}/calendar/${calSelectedDateStr}`).push({
+                task: text,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                if (inputEvent) inputEvent.value = '';
+                loadCalendarEventsModule(calSelectedDateStr);
+            });
+        };
     }
 
-    // 5. 預設先隱藏背面
-    document.getElementById('card-back').style.display = 'none';
-}
+    function loadCalendarEventsModule(dateStr) {
+        const user = firebase.auth().currentUser;
+        if (!user || !listEvent) return;
+        const activeDb = (typeof database !== 'undefined') ? database : ((typeof db !== 'undefined') ? db : null);
+        if (!activeDb) return;
+
+        activeDb.ref(`users/${user.uid}/calendar/${dateStr}`).on('value', (snapshot) => {
+            listEvent.innerHTML = '';
+            const data = snapshot.val();
+            if (!data) {
+                listEvent.innerHTML = '<li style="color:#aaa; list-style:none;">當天還沒有排入複習任務。</li>';
+                return;
+            }
+            Object.keys(data).forEach(key => {
+                const li = document.createElement('li');
+                li.style.marginBottom = "5px";
+                li.textContent = `🔹 ${data[key].task}`;
+                listEvent.appendChild(li);
+            });
+        });
+    }
+});
 
 // 點擊卡片翻面
 document.getElementById('vocab-card').addEventListener('click', () => {
